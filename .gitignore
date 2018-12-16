@@ -3,3 +3,14 @@ node_modules
 config.json
 .env
 .DS_STORE
+node_modules/
+*/node_modules/
+*.env
+/*.env
+docker-compose.yml
+/*/config.json
+/db/
+/deployment/bot_vars.yml
+prod-dc.yml
+vault-pass.txt
+/*/*/config.json
