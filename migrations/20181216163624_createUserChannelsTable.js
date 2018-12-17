@@ -3,6 +3,7 @@ exports.up = function (knex, Promise) {
     t.increments('id').unsigned().primary();
     t.integer('user_id').unsigned().references('id').inTable('users');
     t.integer('channel_id').unsigned().references('id').inTable('channels');
+    t.string('name', 100).notNull();
     t.dateTime('created_at').notNullable().defaultTo(knex.raw('CURRENT_TIMESTAMP'));
   });
 };

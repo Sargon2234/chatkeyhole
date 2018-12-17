@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js --stage production",
-    "start": "npm run buld && node dist/server.js"
+    "start": "npm run build && node dist/server.js"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "webpack": "^4.25.1",
     "webpack-cli": "^3.1.2",
+    "webpack-dotenv-plugin": "^2.1.0",
     "webpack-node-externals": "^1.7.2"
   }
 }

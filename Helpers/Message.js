@@ -1,6 +1,5 @@
-export class MessageParser {
+export class MessageHelper {
   constructor() {
-
   }
 
   parseMessage(message) {
@@ -23,13 +22,16 @@ export class MessageParser {
 
     parsedMessage.data = messageType === 'callback_query' ? usefulPart.data : usefulPart[messageType];
 
-    console.log(usefulPart);
-
     switch (messageType) {
       case 'callback_query':
         parsedMessage.data = usefulPart.data;
         break;
       case 'text':
+      case 'command':
+        if ('entities' in message.message) {
+          parsedMessage.type = 'command';
+        }
+
         parsedMessage.data = usefulPart[messageType];
         break;
       case 'photo':
@@ -43,6 +45,10 @@ export class MessageParser {
   }
 
   defineMessageType(message) {
+    if ('entities' in message) {
+      return 'command';
+    }
+
     if ('callback_query' in message) {
       return 'callback_query';
     }

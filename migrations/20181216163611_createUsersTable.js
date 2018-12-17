@@ -3,7 +3,6 @@ exports.up = function (knex, Promise) {
     t.increments('id').unsigned().primary();
     t.integer('chat_id').unsigned().notNull();
     t.string('user_name', 100).nullable();
-    t.string('chat_name', 100).nullable();
     t.string('first_name', 50).nullable();
     t.string('last_name', 50).nullable();
     t.enu('language', ['en', 'ru', 'ua']).nullable();
