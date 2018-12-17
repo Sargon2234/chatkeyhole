@@ -1,0 +1,8 @@
+ansible_ssh_private_key_file: /Users/user/.ssh/id_rsa
+ansible_python_interpreter: /usr/bin/python3
+ansible_port: 22
+force_apt_get: yes
+docker_user: "{{vault_docker_user}}"
+docker_pass: "{{vault_docker_pass}}"
+domain_name: girrlbeauty.xyz
+monitoring_ip: 51.15.98.187

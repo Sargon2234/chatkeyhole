@@ -14,3 +14,4 @@ docker-compose.yml
 prod-dc.yml
 vault-pass.txt
 /*/*/config.json
+dist/

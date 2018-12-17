@@ -1,0 +1,31 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.js --stage production",
+    "start": "npm run buld && node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "amqp": "^0.2.7",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "knex": "^0.15.2",
+    "mysql2": "^1.6.4",
+    "node-fetch": "^2.3.0",
+    "normalize-url": "^4.0.0",
+    "redis": "^2.8.0",
+    "url-regex": "^4.1.1",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-node-externals": "^1.7.2"
+  }
+}

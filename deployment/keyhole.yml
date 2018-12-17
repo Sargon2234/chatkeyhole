@@ -1,0 +1,205 @@
+---
+
+- hosts: keyholebot
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars_files:
+    - "/Users/user/super-chat-bot/deployment/group_vars/keyholebot/vars.yml"
+
+  tasks:
+    - name: Update
+      apt:
+        upgrade: safe
+
+    - name: Install packages
+      apt:
+        name: ['apt-transport-https',
+               'ca-certificates',
+               'curl',
+               'software-properties-common',
+               'python3-pip',
+               'htop',
+               'redis-tools',
+               'ufw',
+               'python3-passlib',
+               'linux-tools-common',
+               'linux-tools-generic'
+        ]
+        state: present
+
+    - name: Add docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable"
+        state: present
+        update_cache: yes
+
+    - name: Update after docker repo
+      apt:
+        upgrade: safe
+
+    - name: Install docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Install docker compose
+      command: 'pip3 install docker-compose'
+
+    - name: Add certbot repo
+      apt_repository:
+        repo: ppa:certbot/certbot
+        state: present
+
+    - name: Update after cert bot repo
+      apt:
+        upgrade: safe
+
+    - name: Install certbot package
+      apt:
+        name: certbot
+        state: present
+
+    - name: Prepare work config dir and mysql in config
+      file:
+        path: /var/www/configs/mysql
+        state: directory
+
+    - name: Create static dir
+      file:
+        path: /var/www/static
+        state: directory
+
+    - name: Create redis dir
+      file:
+        path: /var/www/redis
+        state: directory
+
+    - name: Create db dir
+      file:
+        path: /var/www/db
+        state: directory
+        mode: 0755
+
+    - name: Upload docker compose
+      copy:
+        src: /Users/user/super-chat-bot/prod-dc.yml
+        dest: /var/www/docker-compose.yml
+
+    - name: Upload redis conf
+      copy:
+        src: /Users/user/super-chat-bot/redis/redis.conf
+        dest: /var/www/configs/redis.conf
+
+    - name: Upload mysql conf
+      copy:
+        src: /Users/user/super-chat-bot/my.cnf
+        dest: /var/www/configs/mysql/my.cnf
+
+    - name: Upload temp nginx conf (http only)
+      copy:
+        src: /Users/user/super-chat-bot/temp_nginx.conf
+        dest: /var/www/configs/nginx.conf
+
+    - name: Upload static files for nginx
+      copy:
+        src: /Users/user/super-chat-bot/index.html
+        dest: /var/www/static/index.html
+
+    - name: Authorize to docker
+      command: "docker login -u {{ docker_user }} -p {{ docker_pass }}"
+
+    - name: Start nginx
+      command: "/usr/local/bin/docker-compose -f /var/www/docker-compose.yml up -d keyholebot-nginx"
+
+    - name: Execute certbot action
+      command: "certbot certonly --webroot --webroot-path /etc/letsencrypt/ --register-unsafely-without-email --agree-tos -d {{domain_name}}"
+
+    - name: Upload nginx conf (http/https)
+      copy:
+        src: /Users/user/super-chat-bot/nginx.conf
+        dest: /var/www/configs/nginx.conf
+
+    - name: Stop old nginx
+      command: "/usr/local/bin/docker-compose -f /var/www/docker-compose.yml stop keyholebot-nginx"
+
+    - name: Start new nginx
+      command: "/usr/local/bin/docker-compose -f /var/www/docker-compose.yml up -d keyholebot-nginx"
+
+    - name: Allow monitoring node_exporter
+      ufw:
+        rule: allow
+        port: 9100
+        proto: tcp
+        from_ip:
+          - "{{monitoring_ip}}"
+
+    - name: Allow monitoring cadvisor
+      ufw:
+        rule: allow
+        port: 8080
+        proto: tcp
+        from_ip:
+          - "{{monitoring_ip}}"
+
+    - name: Allow ufw 80
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+
+    - name: Allow ufw 443
+      ufw:
+        rule: allow
+        port: 443
+        proto: tcp
+
+    - name: Deny all
+      ufw:
+        state: enabled
+        police: deny
+
+    - name: iptables Allow docker user node_exporter from monitoring
+      iptables:
+        chain: DOCKER-USER
+        source: "{{monitoring_ip}}"
+        protocol: tcp
+        jump: ACCEPT
+        destination_port: 9100
+
+    - name: iptables Allow docker user cadvisor from monitoring
+      iptables:
+        chain: DOCKER-USER
+        source: "{{monitoring_ip}}"
+        protocol: tcp
+        jump: ACCEPT
+        destination_port: 8080
+
+    - name: iptables deny 9100
+      iptables:
+        chain: DOCKER-USER
+        protocol: tcp
+        jump: DROP
+        destination_port: 9100
+
+    - name: iptables deny 8080
+      iptables:
+        chain: DOCKER-USER
+        protocol: tcp
+        jump: DROP
+        destination_port: 8080
+
+    - name: Save iptable rules
+      command: "sh -c \"iptables-save > /etc/iptables.rules\""
+
+    - name: Set cronjob login to docker
+      cron:
+        name: "docker login"
+        minute: "0"
+        hour: "*/4"
+        job: "docker login -u {{ docker_user }} -p {{ docker_pass }}"
