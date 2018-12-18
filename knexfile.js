@@ -15,13 +15,11 @@ module.exports = {
   production: {
     client: 'mysql2',
     connection: {
-      connection: {
-        database: config.database,
-        user: config.user,
-        password: config.password,
-        host: config.prod_host,
-        port: config.port,
-      },
+      database: config.database,
+      user: config.user,
+      password: config.password,
+      host: config.prod_host,
+      port: config.port,
     },
     pool: {
       min: 2,

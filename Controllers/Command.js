@@ -16,6 +16,8 @@ export class CommandController {
       '/changeChatName',
       '/registerChannel',
       '/help',
+      '/listChannels',
+      '/sendMessage',
     ];
   }
 
@@ -37,6 +39,8 @@ export class CommandController {
         return this.channelOperations(user, SEND_MESSAGE_TO_CHANNEL);
       case '/registerChannel':
         return this.handleAddChannel(user);
+      case '/listChannels':
+        return this.handleListChannels(user);
       default:
         return this.handleHelp(user);
     }
@@ -79,16 +83,28 @@ export class CommandController {
     const userChannelNames = await this.userHelper.channelsList(userChannels);
     const optionsAsInlineKeyboard = this.telegramInteractor.generateOptions(userChannelNames, subAction);
     const text = await this.textHelper.getText(subAction, user);
-    const preparedText = await this.telegramInteractor.generateUrlString(user.chat_id, text, 'text');
 
-    const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
+    await this.telegramInteractor.sendMessageWithOptions(user, optionsAsInlineKeyboard, text);
+  }
 
-    const messageData = await this.telegramInteractor.sendPreparedMessage(urlReady);
-    if (messageData.ok) {
-      const messageId = messageData.result.message_id;
-      console.log('MID', messageId);
+  async handleListChannels(user) {
+    const userChannels = await this.dbConnection('user_channels as uc')
+        .where('uc.user_id', '=', user.id)
+        .leftJoin('channels as c', 'uc.channel_id', '=', 'c.id')
+        .select('c.chat as channel_name');
 
-      this.userCache.setMessageCache(user.id, messageId);
+    if (!userChannels || !userChannels.length) {
+      const text = await this.textHelper.getText('no_channels_name', user);
+
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+      return;
     }
+
+    const text = await this.textHelper.getText('channels_list', user);
+    const channelsRow = userChannels.map(channel => channel.channel_name).join(',\n');
+
+    const formattedText = `${text}\n${channelsRow}`;
+
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text');
   }
 }

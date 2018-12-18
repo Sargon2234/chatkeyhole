@@ -9,7 +9,7 @@ export class RedisConnector {
   getConnection(dbNum) {
     if (!this.connections[dbNum]) {
       this.connections[dbNum] = redis.createClient({
-        host: 'tg-redis',
+        host: 'keyholebot-redis',
         port: process.env.REDIS_PORT,
         db: dbNum,
       });

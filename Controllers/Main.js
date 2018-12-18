@@ -6,17 +6,19 @@ import { TelegramInteractor } from '../Helpers/TelegramInteractor';
 import { UserCache } from '../Helpers/UserCache';
 import { ChannelHelper } from '../Helpers/Channel';
 import { CallbackController } from './Callback';
+import { AuthorizationHelper } from '../Helpers/Authorization';
 
 export class MainController {
   constructor(databaseConnection) {
     this.messageHelper = new MessageHelper();
-    this.telegramInteractor = new TelegramInteractor();
     this.textsHelper = new TextHelper(databaseConnection);
     this.userHelper = new UserHelper(databaseConnection);
     this.userCache = new UserCache();
-    this.channelHelper = new ChannelHelper(databaseConnection, this.textsHelper, this.telegramInteractor);
+    this.telegramInteractor = new TelegramInteractor(this.userCache);
+    this.authorizationHelper = new AuthorizationHelper(databaseConnection, this.textsHelper, this.telegramInteractor);
+    this.channelHelper = new ChannelHelper(databaseConnection, this.textsHelper, this.telegramInteractor, this.authorizationHelper, this.userCache);
     this.commandController = new CommandController(databaseConnection, this.textsHelper, this.telegramInteractor, this.userHelper, this.userCache);
-    this.callbackController = new CallbackController(databaseConnection, this.textsHelper, this.telegramInteractor, this.userHelper, this.userCache);
+    this.callbackController = new CallbackController(databaseConnection, this.textsHelper, this.telegramInteractor, this.userCache, this.authorizationHelper);
   }
 
   async processIncomingRequest({ body }) {
@@ -24,8 +26,6 @@ export class MainController {
       console.log('Received strange', JSON.stringify(body.inline_query));
       return;
     }
-
-    console.log('B', body);
 
     let accessMessageData = 'message';
     let chatId;
@@ -39,9 +39,20 @@ export class MainController {
 
     const user = await this.userHelper.getUserData(body[accessMessageData].from, chatId);
 
+    // Remove available callback buttons
+    const availableMessageInCache = await this.userCache.getUserCacheMessage(user.id);
+
+    if (availableMessageInCache) {
+      const inlineKeyboardRemove = {
+        message_id: availableMessageInCache,
+        reply_markup: '',
+      };
+
+      await this.telegramInteractor.sendMessage(user.chat_id, 'editMessageReplyMarkup', inlineKeyboardRemove, 'options');
+    }
+
     const dataToProcess = await this.messageHelper.parseMessage(body);
 
-    console.log('DTP', dataToProcess);
     if (!dataToProcess) {
       return false;
     }
@@ -57,32 +68,35 @@ export class MainController {
     }
 
     const userAction = this.userCache.getUserById(user.id);
-    console.log('UA', userAction);
 
-    if (userAction === 'channel') {
-      this.userCache.removeCacheForUser(user.id);
-
-      if (dataToProcess.type !== 'text') {
-        const text = await this.textsHelper.getText('not_understand', user);
-        await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
-        return;
-      }
-
-      dataToProcess.data = dataToProcess.data.includes('@') ? dataToProcess.data : `@${dataToProcess.data}`;
-
-      await this.channelHelper.addNewChannel(user, dataToProcess.data);
+    if (dataToProcess.type !== 'text') {
+      const text = await this.textsHelper.getText('not_understand', user);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+      return;
     }
 
-    // const userData = await this.userHelper.getUser(dataToProcess.chat_id, dataToProcess);
-    //
-    // if (!userData) {
-    //   return;
-    // }
-    //
-    // if ('is_new' in userData || dataToProcess.data === '/start') {
-    //   // If user is new, first of all we have to get his language.
-    //   await this.messageActions.sendTextWithOptions(dataToProcess.chat_id, 'Оберiть мову / Выберите язык / Choose language 🇺🇦/🇷🇺/🇬🇧', 'language');
-    //   return;
-    // }
+    if (userAction) {
+      await this.userCache.removeCacheForUser(user.id);
+    }
+
+    const selectedChannel = await this.userCache.getUserSelectedChannel(user.id);
+
+    switch (userAction) {
+      case 'channel':
+        await this.channelHelper.addNewChannel(user, dataToProcess);
+        break;
+      case 'changeName':
+        await this.channelHelper.changeUserChannelName(user, selectedChannel, dataToProcess);
+        break;
+      case 'code':
+        await this.authorizationHelper.useInviteCode(user, dataToProcess);
+        break;
+      case 'sendMessage':
+        await this.channelHelper.sendMessageToChannel(user, selectedChannel, dataToProcess);
+        break;
+      default:
+        await this.commandController.handleReceivedCommand('/help', user);
+    }
+
   }
 }

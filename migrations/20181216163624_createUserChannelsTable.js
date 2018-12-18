@@ -5,6 +5,7 @@ exports.up = function (knex, Promise) {
     t.integer('channel_id').unsigned().references('id').inTable('channels');
     t.string('name', 100).notNull();
     t.dateTime('created_at').notNullable().defaultTo(knex.raw('CURRENT_TIMESTAMP'));
+    t.unique(['user_id', 'channel_id']);
   });
 };
 

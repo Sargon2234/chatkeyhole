@@ -1,12 +1,30 @@
 import { makeRequest } from './Request';
 
 export class TelegramInteractor {
+  constructor(UserCache) {
+    this.userCache = UserCache;
+  }
+
   async sendMessage(chatId, actionName, data, type) {
     return makeRequest(actionName, this.generateUrlString(chatId, data, type));
   }
 
   async sendPreparedMessage(preparedUrl) {
     return makeRequest('sendMessage', preparedUrl);
+  }
+
+  async sendMessageWithOptions(user, optionsAsInlineKeyboard, text) {
+    const preparedText = await this.generateUrlString(user.chat_id, text, 'text');
+
+    const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
+
+    const messageData = await this.sendPreparedMessage(urlReady);
+    if (messageData.ok) {
+      const messageId = messageData.result.message_id;
+      console.log('MID', messageId);
+
+      this.userCache.setMessageCache(user.id, messageId);
+    }
   }
 
   generateUrlString(chatId, data, type) {
@@ -22,13 +40,13 @@ export class TelegramInteractor {
   }
 
   generateOptions(optionsList, optionsPrefix) {
-    const preparedOptions = optionsList.map(option => ({
+    const preparedOptions = optionsList.map(option => ([{
       text: option,
       callback_data: `${optionsPrefix}:${option}`,
-    }));
+    }]));
 
     const inlineKeyboard = {
-      inline_keyboard: [preparedOptions],
+      inline_keyboard: preparedOptions,
     };
 
     const inUriString = encodeURI(JSON.stringify(inlineKeyboard));

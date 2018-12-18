@@ -1,5 +1,5 @@
 apps:
   - name: 'APP'
-    script: './dist/app.js'
+    script: './dist/server.js'
     exec_mode: 'cluster'
     instances: '1'
