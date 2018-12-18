@@ -18,6 +18,7 @@ export class CommandController {
       '/help',
       '/listChannels',
       '/sendMessage',
+      '/send_message',
     ];
   }
 
@@ -36,6 +37,7 @@ export class CommandController {
       case '/changeChatName':
         return this.channelOperations(user, CHANGE_NAME_ACTION);
       case '/sendMessage':
+      case '/send_message':
         return this.channelOperations(user, SEND_MESSAGE_TO_CHANNEL);
       case '/registerChannel':
         return this.handleAddChannel(user);
@@ -47,7 +49,9 @@ export class CommandController {
   }
 
   async handleStart(user) {
+    const text = await this.textHelper.getText('help', user);
 
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
 
   async handleHelp(user) {
