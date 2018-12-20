@@ -6,11 +6,7 @@ export class TextHelper {
   }
 
   async getText(key, { language }) {
-    if (!language) {
-      language = 'en';
-    }
-
-    if (!availableLanguagesCodes.includes(language)) {
+    if (!language || !availableLanguagesCodes.includes(language)) {
       language = 'en';
     }
 

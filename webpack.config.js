@@ -1,7 +1,15 @@
 const nodeExternals = require('webpack-node-externals');
 const path = require('path');
-// const DotenvPlugin = require('webpack-dotenv-plugin');
+const DotenvPlugin = require('webpack-dotenv-plugin');
 
+let plugin = [];
+
+if (process.env.NEED_ENV) {
+  plugin = [new DotenvPlugin({
+    sample: './.env',
+    path: './.env',
+  })];
+}
 
 module.exports = {
   entry: {
@@ -9,10 +17,7 @@ module.exports = {
   },
   target: 'node',
   externals: [nodeExternals()],
-  // plugins: [new DotenvPlugin({
-  //   sample: './.env',
-  //   path: './.env',
-  // })],
+  plugins: plugin,
   mode: 'production',
   output: {
     libraryTarget: 'commonjs',

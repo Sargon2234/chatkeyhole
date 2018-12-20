@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js --stage production",
-    "start": "npm run build && node dist/server.js"
+    "start": "NEED_ENV=true npm run build && node dist/server.js"
   },
   "keywords": [],
   "author": "",

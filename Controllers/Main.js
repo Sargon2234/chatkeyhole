@@ -22,6 +22,7 @@ export class MainController {
   }
 
   async processIncomingRequest({ body }) {
+    console.log('B', body);
     if (body.inline_query) {
       console.log('Received strange', JSON.stringify(body.inline_query));
       return;
@@ -91,12 +92,8 @@ export class MainController {
       case 'code':
         await this.authorizationHelper.useInviteCode(user, dataToProcess);
         break;
-      case 'sendMessage':
-        await this.channelHelper.sendMessageToChannel(user, selectedChannel, dataToProcess);
-        break;
       default:
         await this.commandController.handleReceivedCommand('/help', user);
     }
-
   }
 }

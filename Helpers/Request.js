@@ -8,9 +8,9 @@ const makeRequest = async (action, params) => {
   return await requestData.json();
 };
 
-const setWebhook = async () => {
-  await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/setWebhook?url=${process.env.SERVER_URL}/tg-secret`);
-  console.log('Webhook set!');
+const setWebhook = async ({ endpoint, token }) => {
+  await fetch(`https://api.telegram.org/bot${token}/setWebhook?url=${process.env.SERVER_URL}/${endpoint}`);
+  console.log('Webhook set!', endpoint);
 };
 
 export { makeRequest, setWebhook };
