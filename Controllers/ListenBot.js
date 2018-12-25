@@ -1,17 +1,37 @@
 import { BotEventEmitter } from '../Helpers/BotEventEmitter';
+import { AuthorizationHelper } from '../Helpers/Authorization';
+import { listenBotCommands } from '../src/listenBotCommands';
+import { CommandController } from './Command';
 
 export class ListenBotController {
   constructor(db) {
-    this.dbConnection = db;
     this.ee = BotEventEmitter;
+    this.authorization = new AuthorizationHelper(db);
+    this.commandController = new CommandController(db, listenBotCommands);
   }
 
   async processIncomingRequest({ body }) {
     console.log('Listener');
 
+    if (body.inline_query) {
+      console.log('Received strange', JSON.stringify(body.inline_query));
+      return;
+    }
+
+    console.log('B', JSON.stringify(body));
+
+    const user = await this.authorization.getUser(body);
+
+    if (!user) {
+      console.log('Some error in user', user);
+      return;
+    }
+
+    console.log('U', user);
+
     console.time('Process message took');
     try {
-      await this.processData(body);
+      await this.processData(body, user);
     } catch (e) {
       console.log('Listener error', e.message);
     } finally {
@@ -19,7 +39,7 @@ export class ListenBotController {
     }
   }
 
-  async processData({ message }) {
+  async processData({ message }, user) {
     const chatData = this.parseChatData(message);
     const messageData = this.parseMessageData(message, chatData);
 
@@ -36,18 +56,37 @@ export class ListenBotController {
     }
 
     if (messageData.chat_id < 0) {
+      messageData.chat_id = message.chat.id;
       return this.processGroupMessage(messageData);
     }
 
-    return this.processInBotMessage(messageData);
+    return this.processInBotMessage(messageData, user);
   }
 
   async processGroupMessage(messageData) {
+    if (messageData.data_type === 'bot_command') {
+      const user = {
+        chat_id: messageData.chat_id,
+      };
+
+      await this.commandController.handleReceivedCommand(messageData.data, user, process.env.BOT_WATCHER_TOKEN);
+
+      return;
+    }
+
     this.ee.emit('group_message', JSON.stringify(messageData));
   }
 
-  async processInBotMessage({ id, is_bot, chat_id, data, data_type }) {
+  async processInBotMessage({ id, is_bot, chat_id, data, data_type }, user) {
+    console.log('In bot message');
 
+    user.chat_id = chat_id;
+
+    switch (data_type) {
+      case 'bot_command':
+        await this.commandController.handleReceivedCommand(data, user, process.env.BOT_WATCHER_TOKEN);
+        break;
+    }
   }
 
   parseChatData({ chat, entities }) {

@@ -1,4 +1,4 @@
-export class UserCache {
+class UserCache {
   constructor() {
     this.userActions = {};
     this.messageCache = {};
@@ -41,3 +41,5 @@ export class UserCache {
     this.userSelectedChannel[userId] = null;
   }
 }
+
+export const LocalCache = new UserCache();

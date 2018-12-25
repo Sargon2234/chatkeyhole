@@ -3,7 +3,7 @@ import { CommandController } from './Command';
 import { TextHelper } from '../Helpers/Text';
 import { UserHelper } from '../Helpers/User';
 import { TelegramInteractor } from '../Helpers/TelegramInteractor';
-import { UserCache } from '../Helpers/UserCache';
+import { LocalCache as UserCache } from '../Helpers/UserCache';
 import { ChannelHelper } from '../Helpers/Channel';
 import { CallbackController } from './Callback';
 import { AuthorizationHelper } from '../Helpers/Authorization';
@@ -13,7 +13,7 @@ export class MainController {
     this.messageHelper = new MessageHelper();
     this.textsHelper = new TextHelper(databaseConnection);
     this.userHelper = new UserHelper(databaseConnection);
-    this.userCache = new UserCache();
+    this.userCache = UserCache;
     this.telegramInteractor = new TelegramInteractor(this.userCache);
     this.authorizationHelper = new AuthorizationHelper(databaseConnection, this.textsHelper, this.telegramInteractor);
     this.channelHelper = new ChannelHelper(databaseConnection, this.textsHelper, this.telegramInteractor, this.authorizationHelper, this.userCache);

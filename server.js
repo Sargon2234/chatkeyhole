@@ -38,7 +38,7 @@ httpServer.listen(process.env.APP_PORT, async () => {
   // Bot who push messages to channel
   app.post('/submitter', async (req, res) => {
     try {
-      await mc.processIncomingRequest(req);
+      await submitterBotController.processIncomingRequest(req);
     } catch (e) {
       console.log('Error in process message', e.message);
     }

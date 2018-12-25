@@ -3,27 +3,27 @@ export class UserHelper {
     this.dbConnection = dbConnection;
   }
 
-  async getUserData(userData, chatId) {
+  async getUserData(userData, tgUserId) {
     let userDataInDb = await this.dbConnection('users')
-        .where('chat_id', '=', chatId)
-        .select('id', 'language', 'chat_id', 'user_name');
+        .where('tg_user_id', '=', tgUserId)
+        .select('id', 'language', 'tg_user_id', 'user_name');
 
     if (!userDataInDb || !userDataInDb.length) {
       userData.language = userData.language_code || null;
       userData.user_name = userData.username;
-      userData.chat_id = chatId;
+      userData.tg_user_id = tgUserId;
 
       const { language_code, id, is_bot, username, ...userDataForDb } = userData;
 
       userDataInDb = await this.dbConnection('users')
           .insert(userDataForDb)
-          .returning('id', 'language', 'chat_id', 'user_name');
+          .returning('id', 'language', 'tg_user_id', 'user_name');
     }
 
     return {
       id: userDataInDb[0].id,
       language: userDataInDb[0].language,
-      chat_id: userDataInDb[0].chat_id,
+      tg_user_id: tgUserId,
       user_name: userDataInDb[0].user_name,
     };
   }

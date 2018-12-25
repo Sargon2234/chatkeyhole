@@ -20,7 +20,7 @@ export class ChannelHelper {
     if (alreadyHaveThisChannel.length) {
       const text = await this.textHelper.getText('already_have', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
       return;
     }
 
@@ -46,13 +46,13 @@ export class ChannelHelper {
       await trx.commit();
 
       const textPart = await this.textHelper.getText('channel_added', user);
-      textToRespondWith = textPart.replace(/_channel_name_/, channelName);
+      textToRespondWith = textPart.replace('_channel_name_', channelName);
     } catch (e) {
       await trx.rollback();
       textToRespondWith = await this.textHelper.getText('error', user);
     }
 
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', textToRespondWith, 'text');
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', textToRespondWith, 'text', process.env.BOT_PUBLISHER_TOKEN);
   }
 
   async changeUserChannelName(user, channel, { data }) {
@@ -69,7 +69,7 @@ export class ChannelHelper {
 
     const text = await this.textHelper.getText('done', user);
 
-    const messageToUser = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+    const messageToUser = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
 
     const clearUserCache = this.userCache.removeSelectedChannel(user.id);
     const clearUserCacheAction = this.userCache.removeUserActionsCache(user.id);

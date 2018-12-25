@@ -5,20 +5,20 @@ export class TelegramInteractor {
     this.userCache = UserCache;
   }
 
-  async sendMessage(chatId, actionName, data, type) {
-    return makeRequest(actionName, this.generateUrlString(chatId, data, type));
+  async sendMessage(chatId, actionName, data, type, token) {
+    return makeRequest(actionName, this.generateUrlString(chatId, data, type), token);
   }
 
-  async sendPreparedMessage(preparedUrl) {
-    return makeRequest('sendMessage', preparedUrl);
+  async sendPreparedMessage(preparedUrl, token) {
+    return makeRequest('sendMessage', preparedUrl, token);
   }
 
-  async sendMessageWithOptions(user, optionsAsInlineKeyboard, text) {
+  async sendMessageWithOptions(user, optionsAsInlineKeyboard, text, token) {
     const preparedText = await this.generateUrlString(user.chat_id, text, 'text');
 
     const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
 
-    const messageData = await this.sendPreparedMessage(urlReady);
+    const messageData = await this.sendPreparedMessage(urlReady, token);
     if (messageData.ok) {
       const messageId = messageData.result.message_id;
       console.log('MID', messageId);
@@ -37,6 +37,10 @@ export class TelegramInteractor {
       case 'options':
         return `chat_id=${chatId}&${Object.entries(data).map(v => v.join('=')).join('&')}`;
     }
+  }
+
+  getChatData(chatId, token){
+    return makeRequest('getChat', `chat_id=${chatId}`, token);
   }
 
   generateOptions(optionsList, optionsPrefix) {

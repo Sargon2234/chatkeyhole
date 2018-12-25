@@ -1,11 +1,14 @@
 import fetch from 'node-fetch';
 
-const makeRequest = async (action, params) => {
-  const baseUrl = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/${action}?${params}`;
+const makeRequest = async (action, params, token) => {
+  const baseUrl = `https://api.telegram.org/bot${token}/${action}?${params}`;
 
   const requestData = await fetch(baseUrl);
 
-  return await requestData.json();
+  const a = await requestData.json();
+
+  // console.log('a', a);
+  return a;
 };
 
 const setWebhook = async ({ endpoint, token }) => {

@@ -1,10 +1,9 @@
 exports.up = function (knex, Promise) {
-  return knex.schema.createTable('user_invitations', function (t) {
+  return knex.schema.createTable('group_channel_invitations', function (t) {
     t.increments('id').unsigned().primary();
     t.string('invitation_code').notNull();
-    t.integer('inviter_user_id').unsigned().references('id').inTable('users').notNull();
-    t.integer('channel_id').unsigned().references('id').inTable('channels').notNull();
-    t.integer('invited_user_id').unsigned().nullable();
+    t.integer('group_to_join').unsigned().references('id').inTable('groups').notNull();
+    t.integer('channel_used').unsigned().references('id').inTable('channels').nullable();
     t.enu('status', ['created', 'activated']);
     t.dateTime('created_at').notNullable().defaultTo(knex.raw('CURRENT_TIMESTAMP'));
     t.dateTime('updated_at').notNullable().defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
@@ -13,5 +12,5 @@ exports.up = function (knex, Promise) {
 };
 
 exports.down = function (knex, Promise) {
-  return knex.schema.dropTable('user_invitations');
+  return knex.schema.dropTable('group_channel_invitations');
 };
