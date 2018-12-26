@@ -1,5 +1,6 @@
 import { promisify } from '../src/Promisify';
 import { UserHelper } from './User';
+import { LocalCache as UserCache } from './UserCache';
 
 export class AuthorizationHelper {
   constructor(dbConnection, TextHelper, TelegramInteractor) {
@@ -7,6 +8,7 @@ export class AuthorizationHelper {
     this.textHelper = TextHelper;
     this.telegramInteractor = TelegramInteractor;
     this.userHelper = new UserHelper(dbConnection);
+    this.userCache = UserCache;
   }
 
   async useInviteCode(user, { data }) {
@@ -22,6 +24,15 @@ export class AuthorizationHelper {
     }
 
     const inviteCodeRecord = inviteCode[0];
+    const channelSelected = this.userCache.getUserSelectedChannel(user.id);
+
+    console.log('Channel in cache', channelSelected);
+
+    const channelData = await this.dbConnection('channels')
+        .where('chat', '=', channelSelected)
+        .select('id');
+
+    const channelId = channelData[0].id;
 
     if (inviteCodeRecord.status !== 'created') {
       const text = await this.textHelper.getText('invitation_code_used', user);
@@ -30,17 +41,7 @@ export class AuthorizationHelper {
       return;
     }
 
-    const userIsInThisChannel = await this.dbConnection('user_channels')
-        .select('id')
-        .where('user_id', '=', user.id)
-        .where('channel_id', '=', inviteCodeRecord.channel_id);
-
-    if (userIsInThisChannel.length) {
-      const text = await this.textHelper.getText('user_already_in', user);
-
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
-      return;
-    }
+    // TODO: Handle if this channel already subscribed to group.
 
     const trx = await promisify(this.dbConnection.transaction);
 
@@ -49,13 +50,13 @@ export class AuthorizationHelper {
       const updateUserInvitations = trx('group_channel_invitations')
           .update({
             status: 'activated',
-            channel_used: inviteCodeRecord.channel_id,
+            channel_used: channelId,
           })
           .where('id', '=', inviteCodeRecord.id);
 
       const addGroupWithChannelBinding = trx('groups_with_channels')
           .insert({
-            channel_id: inviteCodeRecord.channel_id,
+            channel_id: channelId,
             group_id: inviteCode[0].group_to_join,
           });
 
@@ -74,8 +75,8 @@ export class AuthorizationHelper {
     }
 
     const [channelInfo, groupInfo] = await Promise.all([
-        this.dbConnection('channels').where('id', '=', inviteCodeRecord.channel_id).select('chat'),
-        this.dbConnection('groups').where('id', '=', inviteCode[0].group_to_join).select('group'),
+      this.dbConnection('channels').where('id', '=', channelId).select('chat'),
+      this.dbConnection('groups').where('id', '=', inviteCode[0].group_to_join).select('group'),
     ]);
 
     const text = await this.textHelper.getText('invitation_code_success', user);
@@ -122,14 +123,17 @@ export class AuthorizationHelper {
   async getUser(body) {
     let accessMessageData = 'message';
     let tgUserId;
+    let chatId;
 
     if ('callback_query' in body) {
       accessMessageData = 'callback_query';
-      tgUserId = body[accessMessageData].message.from.id;
+      tgUserId = body[accessMessageData].from.id;
+      chatId = body[accessMessageData].message.chat.id;
     } else {
       tgUserId = body.message.from.id;
+      chatId = body.message.chat.id;
     }
 
-    return this.userHelper.getUserData(body[accessMessageData].from, tgUserId);
+    return this.userHelper.getUserData(body[accessMessageData].from, tgUserId, chatId);
   }
 }

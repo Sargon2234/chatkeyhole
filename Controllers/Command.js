@@ -1,6 +1,4 @@
 import * as uuid from 'uuid/v1';
-
-const CHANGE_NAME_ACTION = 'change_name';
 import { TextHelper } from '../Helpers/Text';
 import { TelegramInteractor } from '../Helpers/TelegramInteractor';
 import { UserHelper } from '../Helpers/User';
@@ -10,9 +8,9 @@ export class CommandController {
   constructor(dbConnection, availableCommands) {
     this.dbConnection = dbConnection;
     this.textHelper = new TextHelper(dbConnection);
-    this.telegramInteractor = new TelegramInteractor(dbConnection);
     this.userHelper = new UserHelper(dbConnection);
     this.userCache = LocalCache;
+    this.telegramInteractor = new TelegramInteractor();
     this.availableCommands = availableCommands;
   }
 
@@ -25,24 +23,28 @@ export class CommandController {
       case '/start':
         return this.handleStart(user, token);
       case '/useCode':
-        return this.handleCode(user);
+        return this.channelOperations(user, 'code2');
       case '/addChannel':
         return this.handleAddChannel(user);
       case '/getChannelCode':
         return this.handleGetChannelCode(user, token);
       default:
-        return this.handleHelp(user);
+        return this.handleHelp(user, token);
     }
   }
 
   async handleStart(user, token) {
-    const text = await this.textHelper.getText('help', user);
+    const botType = process.env.BOT_PUBLISHER_TOKEN === token ? 'publisher' : 'listener';
+
+    const text = await this.textHelper.getText(`help_${botType}`, user);
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', token);
   }
 
-  async handleHelp(user) {
-    const text = await this.textHelper.getText('help', user);
+  async handleHelp(user, token) {
+    const botType = process.env.BOT_PUBLISHER_TOKEN === token ? 'publisher' : 'listener';
+
+    const text = await this.textHelper.getText(`help_${botType}`, user);
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
@@ -54,17 +56,14 @@ export class CommandController {
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
   }
 
-  async handleCode(user) {
-    const text = await this.textHelper.getText('wait_code', user);
-
-    this.userCache.setUserAction(user.id, 'code');
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
-  }
 
   async channelOperations(user, subAction) {
-    const userChannels = await this.dbConnection('user_channels').where('user_id', '=', user.id);
+    const userChannels = await this.dbConnection('user_channels')
+        .where('user_id', '=', user.id)
+        .select('channel_id');
 
-    if (!userChannels || !userChannels.length) {
+
+    if (!userChannels.length) {
       const text = await this.textHelper.getText('no_channels_name', user);
 
       await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
@@ -73,7 +72,8 @@ export class CommandController {
 
     const userChannelNames = await this.userHelper.channelsList(userChannels);
     const optionsAsInlineKeyboard = this.telegramInteractor.generateOptions(userChannelNames, subAction);
-    const text = await this.textHelper.getText(subAction, user);
+
+    const text = await this.textHelper.getText('add_user', user);
 
     await this.telegramInteractor.sendMessageWithOptions(user, optionsAsInlineKeyboard, text, process.env.BOT_PUBLISHER_TOKEN);
   }

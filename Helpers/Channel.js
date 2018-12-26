@@ -1,7 +1,8 @@
 import { promisify } from '../src/Promisify';
+import { LocalCache as UserCache } from './UserCache';
 
 export class ChannelHelper {
-  constructor(dbConnection, TextHelper, TelegramInteractor, AuthorizationHelper, UserCache) {
+  constructor(dbConnection, TextHelper, TelegramInteractor, AuthorizationHelper) {
     this.dbConnection = dbConnection;
     this.textHelper = TextHelper;
     this.telegramInteractor = TelegramInteractor;
@@ -77,7 +78,7 @@ export class ChannelHelper {
     await Promise.all([
       clearUserCacheAction,
       clearUserCache,
-        messageToUser
+      messageToUser,
     ]);
   }
 

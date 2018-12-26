@@ -1,57 +1,21 @@
-import * as uuid from 'uuid/v1';
+import { LocalCache as UserCache } from '../Helpers/UserCache';
 
 export class CallbackController {
-  constructor(dbConnection, TextHelper, TelegramInteractor, UserCache, AuthorizationHelper) {
-    this.dbConnection = dbConnection;
+  constructor(TextHelper, TelegramInteractor) {
     this.textHelper = TextHelper;
     this.telegramInteractor = TelegramInteractor;
     this.userCache = UserCache;
-    this.authorizationHelper = AuthorizationHelper;
   }
 
   async handleCallback(callbackData, user) {
     const [prefix, action] = callbackData.split(':');
 
     switch (prefix) {
-      case 'add_user':
-        return this.handleAddUser(action, user);
       case 'skip':
         return this.handleSkip(user);
+      case 'code2':
+        return this.bindCodeAndChannel(user, action);
     }
-  }
-
-  async handleAddUser(channel, user) {
-    const verifiedUserAndChannel = await this.authorizationHelper.verifyUserAndChannel(channel, user);
-
-    if (!verifiedUserAndChannel) {
-      return;
-    }
-
-    const verifiedChannel = verifiedUserAndChannel.channel;
-
-    const text = await this.textHelper.getText('add_user_code', user);
-    const formattedText = text.replace('_channel_name_', channel);
-    const code = uuid().slice(0, 6);
-
-    const registerInvitationCodeInDb = this.dbConnection('user_invitations').insert(
-        {
-          invitation_code: code,
-          inviter_user_id: user.id,
-          channel_id: verifiedChannel.id,
-          status: 'created',
-        },
-    );
-
-    const textMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text', process.env.BOT_PUBLISHER_TOKEN);
-
-    await Promise.all([
-      registerInvitationCodeInDb,
-      textMessage,
-    ]);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', code, 'text', process.env.BOT_PUBLISHER_TOKEN);
   }
 
   async handleSkip(user) {
@@ -67,6 +31,17 @@ export class CallbackController {
       removeSelectedChannel,
     ]);
   }
+
+  async bindCodeAndChannel(user, channelName) {
+    await this.userCache.setUserSelectedChannel(user.id, channelName);
+
+    const text = await this.textHelper.getText('wait_code', user);
+
+    this.userCache.setUserAction(user.id, 'code');
+
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+  }
+
 
   async sendTextWithSkip(user, skipText, formattedText) {
     const textInline = {

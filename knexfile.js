@@ -19,7 +19,7 @@ module.exports = {
       user: config.user,
       password: config.password,
       host: config.prod_host,
-      port: config.port,
+      port: config.prod_port,
     },
     pool: {
       min: 2,

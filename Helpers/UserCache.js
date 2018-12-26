@@ -6,6 +6,8 @@ class UserCache {
   }
 
   getUserById(userId) {
+    console.log('get cache for user', userId);
+
     return this.userActions[userId];
   }
 
@@ -18,6 +20,7 @@ class UserCache {
   }
 
   setUserAction(userId, action) {
+    console.log('set cache for user', userId);
     this.userActions[userId] = action;
   }
 

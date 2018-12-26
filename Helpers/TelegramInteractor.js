@@ -1,7 +1,8 @@
 import { makeRequest } from './Request';
+import { LocalCache as UserCache } from './UserCache';
 
 export class TelegramInteractor {
-  constructor(UserCache) {
+  constructor() {
     this.userCache = UserCache;
   }
 
@@ -19,6 +20,7 @@ export class TelegramInteractor {
     const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
 
     const messageData = await this.sendPreparedMessage(urlReady, token);
+
     if (messageData.ok) {
       const messageId = messageData.result.message_id;
       console.log('MID', messageId);
@@ -39,7 +41,7 @@ export class TelegramInteractor {
     }
   }
 
-  getChatData(chatId, token){
+  getChatData(chatId, token) {
     return makeRequest('getChat', `chat_id=${chatId}`, token);
   }
 

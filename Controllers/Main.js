@@ -14,7 +14,7 @@ export class MainController {
     this.textsHelper = new TextHelper(databaseConnection);
     this.userHelper = new UserHelper(databaseConnection);
     this.userCache = UserCache;
-    this.telegramInteractor = new TelegramInteractor(this.userCache);
+    this.telegramInteractor = new TelegramInteractor();
     this.authorizationHelper = new AuthorizationHelper(databaseConnection, this.textsHelper, this.telegramInteractor);
     this.channelHelper = new ChannelHelper(databaseConnection, this.textsHelper, this.telegramInteractor, this.authorizationHelper, this.userCache);
     this.commandController = new CommandController(databaseConnection, this.textsHelper, this.telegramInteractor, this.userHelper, this.userCache);

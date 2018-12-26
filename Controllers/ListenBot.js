@@ -2,11 +2,15 @@ import { BotEventEmitter } from '../Helpers/BotEventEmitter';
 import { AuthorizationHelper } from '../Helpers/Authorization';
 import { listenBotCommands } from '../src/listenBotCommands';
 import { CommandController } from './Command';
+import { TextHelper } from '../Helpers/Text';
+import { TelegramInteractor } from '../Helpers/TelegramInteractor';
 
 export class ListenBotController {
   constructor(db) {
     this.ee = BotEventEmitter;
-    this.authorization = new AuthorizationHelper(db);
+    this.textHelper = new TextHelper(db);
+    this.telegramInteractor = new TelegramInteractor();
+    this.authorization = new AuthorizationHelper(db, this.textHelper, this.telegramInteractor);
     this.commandController = new CommandController(db, listenBotCommands);
   }
 

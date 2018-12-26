@@ -2,8 +2,6 @@ import http from 'http';
 import * as bodyParser from 'body-parser';
 import express from 'express';
 import { setWebhook } from './Helpers/Request';
-// import { RedisConnector } from './RedisConnector';
-import { MainController } from './Controllers/Main';
 import { db } from './DBConnector';
 import { ListenBotController } from './Controllers/ListenBot';
 import { BotEventEmitter } from './Helpers/BotEventEmitter';
@@ -16,14 +14,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 httpServer.listen(process.env.APP_PORT, async () => {
-  // await Promise.all([
-  //   setWebhook({ token: process.env.BOT_PUBLISHER_TOKEN, endpoint: 'submitter' }),
-  //   setWebhook({ token: process.env.BOT_WATCHER_TOKEN, endpoint: 'listener' }),
-  // ]);
+  await Promise.all([
+    setWebhook({ token: process.env.BOT_PUBLISHER_TOKEN, endpoint: 'submitter' }),
+    setWebhook({ token: process.env.BOT_WATCHER_TOKEN, endpoint: 'listener' }),
+  ]);
 
-  // const redisConnector = new RedisConnector();
-
-  const mc = new MainController(db);
   const listenBotController = new ListenBotController(db, BotEventEmitter);
   const submitterBotController = new PublisherBot(db);
 

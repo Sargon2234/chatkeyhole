@@ -12,19 +12,17 @@ export class PublisherBot {
   constructor(db) {
     this.messageHelper = new MessageHelper();
     this.dbConnection = db;
-    this.authorization = new AuthorizationHelper(db);
     this.commandController = new CommandController(db, publisherBotCommands);
     this.userCache = UserCache;
-    this.telegramInteractor = new TelegramInteractor(this.userCache);
+    this.telegramInteractor = new TelegramInteractor();
     this.textsHelper = new TextHelper(db);
-    this.channelHelper = new ChannelHelper(db, this.textsHelper, this.telegramInteractor, this.authorization, this.userCache);
-    this.callbackController = new CallbackController(db, this.textsHelper, this.telegramInteractor, this.userCache, this.authorization);
+    this.authorization = new AuthorizationHelper(db, this.textsHelper, this.telegramInteractor);
+    this.callbackController = new CallbackController(this.textsHelper, this.telegramInteractor, this.userCache);
+    this.channelHelper = new ChannelHelper(db, this.textsHelper, this.telegramInteractor, this.authorization)
   }
 
   async publishMessageToDependentChannels(messageData) {
     const message = JSON.parse(messageData);
-
-    console.log('In publisher', message);
 
     const group = await this.dbConnection('groups as g')
         .where('g.chat_id', '=', message.chat_id)
@@ -36,11 +34,21 @@ export class PublisherBot {
       return;
     }
 
-    if (!group[0].chat) {
-      return;
+    const messageActions = [];
+
+    for (const channelsToPublish of group) {
+      if (channelsToPublish.chat) {
+        const userNameForMessage = await this.dbConnection('users')
+            .where('tg_user_id', '=', message.id)
+            .select('user_name');
+
+        const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
+
+        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', process.env.BOT_PUBLISHER_TOKEN));
+      }
     }
 
-    console.log('G', group);
+    await Promise.all(messageActions);
   }
 
   async processIncomingRequest({ body }) {
@@ -57,8 +65,6 @@ export class PublisherBot {
       console.log('Some error in user', user);
       return;
     }
-
-    console.log('U', user);
 
     // Remove available callback buttons
     const availableMessageInCache = await this.userCache.getUserCacheMessage(user.id);
@@ -80,7 +86,7 @@ export class PublisherBot {
 
     switch (dataToProcess.type) {
       case 'command':
-        return this.commandController.handleReceivedCommand(dataToProcess.data, user);
+        return this.commandController.handleReceivedCommand(dataToProcess.data, user, process.env.BOT_PUBLISHER_TOKEN);
       case 'callback_query':
         return this.callbackController.handleCallback(dataToProcess.data, user);
     }
@@ -94,23 +100,18 @@ export class PublisherBot {
     }
 
     if (userAction) {
-      await this.userCache.removeCacheForUser(user.id);
+      this.userCache.removeCacheForUser(user.id);
     }
 
-    const selectedChannel = await this.userCache.getUserSelectedChannel(user.id);
-
     switch (userAction) {
-      case 'channel':
-        await this.channelHelper.addNewChannel(user, dataToProcess);
-        break;
-      case 'changeName':
-        await this.channelHelper.changeUserChannelName(user, selectedChannel, dataToProcess);
-        break;
       case 'code':
         await this.authorization.useInviteCode(user, dataToProcess);
         break;
+      case 'channel':
+        await this.channelHelper.addNewChannel(user, dataToProcess);
+        break;
       default:
-        await this.commandController.handleReceivedCommand('/help', user);
+        await this.commandController.handleReceivedCommand('/help', user, process.env.BOT_PUBLISHER_TOKEN);
     }
   }
 }
