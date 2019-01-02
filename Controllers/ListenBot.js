@@ -61,6 +61,7 @@ export class ListenBotController {
 
     if (messageData.chat_id < 0) {
       messageData.chat_id = message.chat.id;
+      
       return this.processGroupMessage(messageData);
     }
 
