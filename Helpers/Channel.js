@@ -21,7 +21,7 @@ export class ChannelHelper {
     if (alreadyHaveThisChannel.length) {
       const text = await this.textHelper.getText('already_have', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return;
     }
 
@@ -53,7 +53,7 @@ export class ChannelHelper {
       textToRespondWith = await this.textHelper.getText('error', user);
     }
 
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', textToRespondWith, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', textToRespondWith, 'text');
   }
 
   async changeUserChannelName(user, channel, { data }) {
@@ -70,7 +70,7 @@ export class ChannelHelper {
 
     const text = await this.textHelper.getText('done', user);
 
-    const messageToUser = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    const messageToUser = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
 
     const clearUserCache = this.userCache.removeSelectedChannel(user.id);
     const clearUserCacheAction = this.userCache.removeUserActionsCache(user.id);
@@ -79,33 +79,6 @@ export class ChannelHelper {
       clearUserCacheAction,
       clearUserCache,
       messageToUser,
-    ]);
-  }
-
-  async sendMessageToChannel(user, selectedChannel, { data }) {
-    const authorized = await this.autorizationHelper.verifyUserAndChannel(selectedChannel, user);
-
-    if (!authorized) {
-      return;
-    }
-
-    const verifiedUser = authorized.user;
-
-    const formattedMessage = `${verifiedUser.channel_name}:\n${data}`;
-
-    const sendMessageToChannel = this.telegramInteractor.sendMessage(selectedChannel, 'sendMessage', formattedMessage, 'text');
-
-    const text = await this.textHelper.getText('done', user);
-
-    const doneMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
-    const clearUserCache = this.userCache.removeSelectedChannel(user.id);
-    const clearUserCacheAction = this.userCache.removeUserActionsCache(user.id);
-
-    await Promise.all([
-      clearUserCacheAction,
-      clearUserCache,
-      sendMessageToChannel,
-      doneMessage,
     ]);
   }
 }

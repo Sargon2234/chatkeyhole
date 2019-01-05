@@ -21,7 +21,7 @@ export class CallbackController {
   async handleSkip(user) {
     const text = await this.textHelper.getText('skip_action', user);
 
-    const skipMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    const skipMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
     const removeLatestReplyMarkup = this.userCache.removeCacheForUser(user.id);
     const removeSelectedChannel = this.userCache.removeSelectedChannel(user.id);
 
@@ -39,7 +39,7 @@ export class CallbackController {
 
     this.userCache.setUserAction(user.id, 'code');
 
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
 
 
@@ -59,6 +59,6 @@ export class CallbackController {
 
     const inlinePart = `reply_markup=${inUriString}`;
 
-    await this.telegramInteractor.sendMessageWithOptions(user, inlinePart, formattedText, process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessageWithOptions(user, inlinePart, formattedText);
   }
 }

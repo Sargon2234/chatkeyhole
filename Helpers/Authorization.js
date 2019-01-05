@@ -19,7 +19,7 @@ export class AuthorizationHelper {
     if (!inviteCode || !inviteCode.length) {
       const text = await this.textHelper.getText('wrong_invitation_code', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return;
     }
 
@@ -37,7 +37,7 @@ export class AuthorizationHelper {
     if (inviteCodeRecord.status !== 'created') {
       const text = await this.textHelper.getText('invitation_code_used', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return;
     }
 
@@ -70,7 +70,7 @@ export class AuthorizationHelper {
       await trx.rollback();
 
       const text = await this.textHelper.getText('error', user);
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return;
     }
 
@@ -83,7 +83,7 @@ export class AuthorizationHelper {
 
     const formattedText = text.replace('_channel_name_', channelInfo[0].chat).replace('_group_name_', groupInfo[0].group);
 
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text');
   }
 
   async verifyUserAndChannel(channel, user) {
@@ -94,7 +94,7 @@ export class AuthorizationHelper {
     if (!channelId || !channelId.length) {
       const text = await this.textHelper.getText('no_channel', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return false;
     }
 
@@ -106,7 +106,7 @@ export class AuthorizationHelper {
     if (!currentUserName || !currentUserName.length) {
       const text = await this.textHelper.getText('not_registered_in_channel', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return false;
     }
 

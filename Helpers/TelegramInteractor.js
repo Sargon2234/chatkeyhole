@@ -6,20 +6,26 @@ export class TelegramInteractor {
     this.userCache = UserCache;
   }
 
-  async sendMessage(chatId, actionName, data, type, token) {
-    return makeRequest(actionName, this.generateUrlString(chatId, data, type), token);
+  async sendMessage(chatId, actionName, data, type, additional_data) {
+    if (additional_data) {
+      const row = `chat_id=${chatId}&photo=${data}&${additional_data.type}=${additional_data.text}`;
+
+      return makeRequest(actionName, row);
+    }
+
+    return makeRequest(actionName, this.generateUrlString(chatId, data, type));
   }
 
-  async sendPreparedMessage(preparedUrl, token) {
-    return makeRequest('sendMessage', preparedUrl, token);
+  async sendPreparedMessage(preparedUrl) {
+    return makeRequest('sendMessage', preparedUrl);
   }
 
-  async sendMessageWithOptions(user, optionsAsInlineKeyboard, text, token) {
+  async sendMessageWithOptions(user, optionsAsInlineKeyboard, text) {
     const preparedText = await this.generateUrlString(user.chat_id, text, 'text');
 
     const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
 
-    const messageData = await this.sendPreparedMessage(urlReady, token);
+    const messageData = await this.sendPreparedMessage(urlReady);
 
     if (messageData.ok) {
       const messageId = messageData.result.message_id;
@@ -34,15 +40,24 @@ export class TelegramInteractor {
       case 'text':
         data = encodeURI(data);
         return `chat_id=${chatId}&text=${data}`;
-      case 'image':
+      case 'photo':
         return `chat_id=${chatId}&photo=${data}`;
       case 'options':
         return `chat_id=${chatId}&${Object.entries(data).map(v => v.join('=')).join('&')}`;
     }
+
+    // case 'document':
+    // case 'video':
+    //  case 'audio':
+    // case 'voice':
+    // case 'video_note':
+    // case 'location'
+    // case 'contact'
+    // case 'animation':
   }
 
-  getChatData(chatId, token) {
-    return makeRequest('getChat', `chat_id=${chatId}`, token);
+  getChatData(chatId) {
+    return makeRequest('getChat', `chat_id=${chatId}`);
   }
 
   generateOptions(optionsList, optionsPrefix) {

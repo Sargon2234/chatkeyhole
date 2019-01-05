@@ -20,7 +20,7 @@ class UserCache {
   }
 
   setUserAction(userId, action) {
-    console.log('set cache for user', userId);
+    console.log('set cache for user', userId, action);
     this.userActions[userId] = action;
   }
 

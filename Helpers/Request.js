@@ -1,7 +1,8 @@
 import fetch from 'node-fetch';
 
-const makeRequest = async (action, params, token) => {
-  const baseUrl = `https://api.telegram.org/bot${token}/${action}?${params}`;
+const makeRequest = async (action, params) => {
+  const baseUrl = `https://api.telegram.org/bot${process.env.KEYHOLE_SERVICE}/${action}?${params}`;
+  // console.log('BU', baseUrl);
 
   const requestData = await fetch(baseUrl);
 

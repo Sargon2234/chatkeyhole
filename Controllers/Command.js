@@ -5,23 +5,24 @@ import { UserHelper } from '../Helpers/User';
 import { LocalCache } from '../Helpers/UserCache';
 
 export class CommandController {
-  constructor(dbConnection, availableCommands) {
+  constructor(dbConnection) {
     this.dbConnection = dbConnection;
     this.textHelper = new TextHelper(dbConnection);
     this.userHelper = new UserHelper(dbConnection);
     this.userCache = LocalCache;
     this.telegramInteractor = new TelegramInteractor();
-    this.availableCommands = availableCommands;
   }
 
-  async handleReceivedCommand(command, user, token) {
-    if (!this.availableCommands.includes(command)) {
+  async handleReceivedCommand(availableCommands, botType, command, user, token) {
+    console.log('Handle command', botType, command);
+
+    if (!availableCommands.includes(command)) {
       return false;
     }
 
     switch (command) {
       case '/start':
-        return this.handleStart(user, token);
+        return this.handleStart(user, token, botType);
       case '/useCode':
         return this.channelOperations(user, 'code2');
       case '/addChannel':
@@ -29,21 +30,18 @@ export class CommandController {
       case '/getChannelCode':
         return this.handleGetChannelCode(user, token);
       default:
-        return this.handleHelp(user, token);
+        return this.handleHelp(user, token, botType);
     }
   }
 
-  async handleStart(user, token) {
-    const botType = process.env.BOT_PUBLISHER_TOKEN === token ? 'publisher' : 'listener';
-
+  async handleStart(user, token, botType) {
+    console.log('BT', botType);
     const text = await this.textHelper.getText(`help_${botType}`, user);
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', token);
   }
 
-  async handleHelp(user, token) {
-    const botType = process.env.BOT_PUBLISHER_TOKEN === token ? 'publisher' : 'listener';
-
+  async handleHelp(user, token, botType) {
     const text = await this.textHelper.getText(`help_${botType}`, user);
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
@@ -53,7 +51,7 @@ export class CommandController {
     const text = await this.textHelper.getText('add_channel', user);
 
     this.userCache.setUserAction(user.id, 'channel');
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
 
 
@@ -66,7 +64,7 @@ export class CommandController {
     if (!userChannels.length) {
       const text = await this.textHelper.getText('no_channels_name', user);
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', process.env.BOT_PUBLISHER_TOKEN);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
       return;
     }
 
@@ -75,14 +73,10 @@ export class CommandController {
 
     const text = await this.textHelper.getText('add_user', user);
 
-    await this.telegramInteractor.sendMessageWithOptions(user, optionsAsInlineKeyboard, text, process.env.BOT_PUBLISHER_TOKEN);
+    await this.telegramInteractor.sendMessageWithOptions(user, optionsAsInlineKeyboard, text);
   }
 
-  async handleGetChannelCode(user, token) {
-    if (token !== process.env.BOT_WATCHER_TOKEN) {
-      return;
-    }
-
+  async handleGetChannelCode(user) {
     const code = uuid().slice(0, 6);
     // Check if message came from group. If so, we already have all required data.
     if (user.chat_id < 0) {
@@ -90,7 +84,7 @@ export class CommandController {
 
       // If we don't have such group, but received message from it, we have to register this group.
       if (!groupDataFromDb.length) {
-        const chatDataFromTG = await this.telegramInteractor.getChatData(user.chat_id, token);
+        const chatDataFromTG = await this.telegramInteractor.getChatData(user.chat_id);
 
         if (!chatDataFromTG.ok) {
           console.log('Error in receiving chat data', chatDataFromTG);
@@ -118,7 +112,7 @@ export class CommandController {
       const text = await this.textHelper.getText('add_user_code', user);
       const formattedText = text.replace('_channel_name_', groupDataFromDb[0].group);
 
-      const textMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text', token);
+      const textMessage = this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', formattedText, 'text');
 
       await Promise.all([
         registerInvitationCodeInDb,
@@ -127,13 +121,12 @@ export class CommandController {
 
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', code, 'text', token);
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', code, 'text');
 
       return;
     }
 
     // if don't, we have to ask which group user want to use
     // So, user provide group name, we check if user connected with this group, if don't, go away.
-    // TODO:
   }
 }

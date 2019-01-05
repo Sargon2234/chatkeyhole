@@ -2,67 +2,59 @@ export class MessageHelper {
   constructor() {
   }
 
-  parseMessage(message) {
-    const messageType = this.defineMessageType(message);
-    const usefulPart = messageType === 'callback_query' ? message[messageType] : message.message;
+  parseMessageData(message, { chat_id, data_type }) {
+    const { id, is_bot } = message.from;
+    let data;
+    let dataType;
+    let additionalData = null;
 
-    // If this is bot message we can ignore.
-    if (usefulPart.from.is_bot) {
-      return false;
+    if (message.text) {
+      console.log('Received text', message.text);
+      data = message.text;
+      dataType = 'text';
     }
 
-    const parsedMessage = {
-      type: messageType,
-      time: message.update_id,
-      chat_id: usefulPart.from.id,
-      user_name: usefulPart.from.username,
-      first_name: usefulPart.from.first_name,
-      last_name: usefulPart.from.last_name,
+    if (message.photo) {
+      console.log('Received photo', JSON.stringify(message.photo));
+      data = message.photo;
+
+      if (message.caption) {
+        additionalData = {
+          type: 'caption',
+          text: message.caption,
+        };
+      }
+      dataType = 'photo';
+    }
+
+    if (message.document) {
+      console.log('Received file', JSON.stringify(message.document));
+      data = message.document;
+      dataType = 'document';
+    }
+
+    if (message.reply_to_message) {
+      additionalData = message.reply_to_message;
+      console.log('This is reply', JSON.stringify(message.reply_to_message));
+    }
+
+    if (data_type) {
+      dataType = data_type;
+    }
+
+    if (message.callback_query) {
+      data = message.callback_query;
+    }
+
+    console.log('In chat:', chat_id, 'from', id, 'it is bot', is_bot);
+
+    return {
+      id,
+      is_bot,
+      chat_id,
+      data,
+      data_type: dataType,
+      additional_data: additionalData,
     };
-
-    parsedMessage.data = messageType === 'callback_query' ? usefulPart.data : usefulPart[messageType];
-
-    switch (messageType) {
-      case 'callback_query':
-        parsedMessage.data = usefulPart.data;
-        break;
-      case 'text':
-      case 'command':
-        if ('entities' in message.message) {
-          parsedMessage.type = 'command';
-        }
-
-        parsedMessage.data = usefulPart[messageType];
-        break;
-      case 'photo':
-        parsedMessage.data = usefulPart[messageType][usefulPart[messageType].length - 1].file_id;
-        break;
-      default:
-        return false;
-    }
-
-    return parsedMessage;
-  }
-
-  defineMessageType(message) {
-    if ('entities' in message) {
-      return 'command';
-    }
-
-    if ('callback_query' in message) {
-      return 'callback_query';
-    }
-
-    if ('message' in message) {
-      if ('text' in message.message) {
-        return 'text';
-      }
-
-      if ('photo' in message.message) {
-        return 'photo';
-      }
-    }
-
-    return false;
   }
 }
