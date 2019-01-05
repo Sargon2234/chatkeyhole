@@ -3,9 +3,7 @@ import * as bodyParser from 'body-parser';
 import express from 'express';
 import { setWebhook } from './Helpers/Request';
 import { db } from './DBConnector';
-// import { ListenBotController } from './Controllers/ListenBot';
 import { BotEventEmitter } from './Helpers/BotEventEmitter';
-// import { PublisherBot } from './Controllers/PublisherBot';
 import { TotalBotController } from './Controllers/TotalBotController';
 
 const app = express();

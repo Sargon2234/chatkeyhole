@@ -8,7 +8,7 @@ export class TelegramInteractor {
 
   async sendMessage(chatId, actionName, data, type, additional_data) {
     if (additional_data) {
-      const row = `chat_id=${chatId}&photo=${data}&${additional_data.type}=${additional_data.text}`;
+      const row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
 
       return makeRequest(actionName, row);
     }
@@ -40,14 +40,15 @@ export class TelegramInteractor {
       case 'text':
         data = encodeURI(data);
         return `chat_id=${chatId}&text=${data}`;
-      case 'photo':
-        return `chat_id=${chatId}&photo=${data}`;
       case 'options':
         return `chat_id=${chatId}&${Object.entries(data).map(v => v.join('=')).join('&')}`;
+      case 'video':
+      case 'photo':
+      case 'document':
+        return `chat_id=${chatId}&${type}=${data}`;
     }
 
     // case 'document':
-    // case 'video':
     //  case 'audio':
     // case 'voice':
     // case 'video_note':

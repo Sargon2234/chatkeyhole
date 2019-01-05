@@ -27,15 +27,50 @@ export class MessageHelper {
       dataType = 'photo';
     }
 
+    if (message.sticker) {
+      data = message.sticker.file_id;
+      dataType = 'sticker';
+    }
+
     if (message.document) {
       console.log('Received file', JSON.stringify(message.document));
-      data = message.document;
       dataType = 'document';
+
+      if (message.document.mime_type && message.document.mime_type === 'video/mp4') {
+        switch (message.document.mime_type) {
+          case 'video/mp4':
+            dataType = 'video';
+            break;
+        }
+      }
+
+      data = message.document.file_id;
     }
 
     if (message.reply_to_message) {
-      additionalData = message.reply_to_message;
       console.log('This is reply', JSON.stringify(message.reply_to_message));
+      const replyMessageId = message.reply_to_message.message_id;
+
+      additionalData = {
+        type: 'reply_to_message_id',
+        text: replyMessageId,
+      };
+    }
+
+    console.log('M', JSON.stringify(message));
+
+    if (message.entities) {
+      const formattedEntites = message.entities
+          .filter(entity => entity.type === 'text_link')
+          .map(entity => entity.url)
+          .join('\n');
+
+      console.log('Formateed', formattedEntites, dataType);
+
+      // Append to text message all links.
+      if (dataType === 'text') {
+        data = `${data}\n${formattedEntites}`;
+      }
     }
 
     if (data_type) {
@@ -45,8 +80,6 @@ export class MessageHelper {
     if (message.callback_query) {
       data = message.callback_query;
     }
-
-    console.log('In chat:', chat_id, 'from', id, 'it is bot', is_bot);
 
     return {
       id,

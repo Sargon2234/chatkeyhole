@@ -10,6 +10,9 @@ import { CallbackController } from './Callback';
 import { ChannelHelper } from '../Helpers/Channel';
 import { MessageHelper } from '../Helpers/Message';
 
+const CAPTION_NEEDED = ['photo', 'video', 'document'];
+const NEED_PREVIOUS_MESSAGE = ['sticker'];
+
 export class TotalBotController {
   constructor(db) {
     this.ee = BotEventEmitter;
@@ -41,53 +44,75 @@ export class TotalBotController {
     const messageActions = [];
 
     for (const channelsToPublish of group) {
-      if (channelsToPublish.chat) {
-        const userNameForMessage = await this.dbConnection('users')
-            .where('tg_user_id', '=', message.id)
-            .select('user_name');
+      // If there is no chat id, skip and go to next message
+      if (!channelsToPublish.chat) {
+        continue;
+      }
 
-        // We have bunch of files or some other data
-        if (Array.isArray(message.data)) {
-          // Sort files from bigger size to lower
-          const filteredData = message.data.sort((a, b) => b.size - a.size)[0];
-          const fileToSend = filteredData.file_id;
+      const userNameForMessage = await this.dbConnection('users')
+          .where('tg_user_id', '=', message.id)
+          .select('user_name');
 
-          console.log('F', fileToSend);
+      const textToSendBeforeData = `${userNameForMessage[0].user_name}`;
 
-          const textToSendBeforeData = `${userNameForMessage[0].user_name}`;
-
-          if (message.data_type === 'photo') {
-            if (message.additional_data) {
-              if (message.additional_data.type === 'caption') {
-                message.additional_data.text = `${textToSendBeforeData}: ${message.additional_data.text}`;
-              }
-            } else {
-              message.additional_data = {
-                type: 'caption',
-                text: textToSendBeforeData,
-              };
-            }
+      // Define do we need to add caption for message.
+      if (CAPTION_NEEDED.includes(message.data_type)) {
+        if (message.additional_data) {
+          if (message.additional_data.type === 'caption') {
+            message.additional_data.text = `${textToSendBeforeData}: ${message.additional_data.text}`;
           }
-
-          // await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSendBeforeData, 'text');
-
-          switch (message.data_type) {
-            case 'photo':
-              await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendPhoto', fileToSend, 'photo', message.additional_data);
-              break;
-          }
-
-          console.log('Received data array');
-          continue;
+        } else {
+          message.additional_data = {
+            type: 'caption',
+            text: textToSendBeforeData,
+          };
         }
 
-        const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
-
-        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text'));
+        message.additional_data.text = encodeURI(message.additional_data.text);
       }
+
+      // We have bunch of files or some other data
+      if (Array.isArray(message.data)) {
+        // Sort files from bigger size to lower
+        const filteredData = message.data.sort((a, b) => b.size - a.size)[0];
+        const fileToSend = filteredData.file_id;
+
+        // Here we process bunch of files. Few documents, images etc.
+        switch (message.data_type) {
+          case 'photo':
+            messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendPhoto', fileToSend, 'photo', message.additional_data));
+            break;
+        }
+
+        continue;
+      }
+
+      if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
+        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text'));
+      }
+
+      // We got single file.
+      switch (message.data_type) {
+        case 'video':
+        case 'document':
+        case 'sticker':
+          messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendDocument', message.data, 'document', message.additional_data));
+          continue;
+      }
+
+      const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
+
+      messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', message.additional_data));
+
     }
 
-    await Promise.all(messageActions);
+    if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
+      for (const prom of messageActions) {
+        await prom;
+      }
+    } else {
+      await Promise.all(messageActions);
+    }
   }
 
   async processIncomingRequest({ body }) {
@@ -110,7 +135,7 @@ export class TotalBotController {
       return;
     }
 
-    console.log('U', user);
+    console.log('U', JSON.stringify(user));
 
     console.time('Process message took');
 
@@ -216,7 +241,7 @@ export class TotalBotController {
   }
 
   parseChatData({ chat, entities, force_data_type }) {
-    console.log('CD', chat);
+    console.log('CD', JSON.stringify(chat));
     const { id, title, type } = chat;
 
     const returnData = { chat_id: id, title, type };
