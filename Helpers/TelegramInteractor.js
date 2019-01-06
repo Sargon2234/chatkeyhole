@@ -7,7 +7,7 @@ export class TelegramInteractor {
   }
 
   async sendMessage(chatId, actionName, data, type, additional_data) {
-    if (additional_data) {
+    if (additional_data && type !== 'forward_message') {
       const row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
 
       return makeRequest(actionName, row);
@@ -38,7 +38,7 @@ export class TelegramInteractor {
   generateUrlString(chatId, data, type) {
     switch (type) {
       case 'text':
-        data = encodeURI(data);
+        data = encodeURIComponent(data);
         return `chat_id=${chatId}&text=${data}`;
       case 'options':
         return `chat_id=${chatId}&${Object.entries(data).map(v => v.join('=')).join('&')}`;
@@ -46,15 +46,9 @@ export class TelegramInteractor {
       case 'photo':
       case 'document':
         return `chat_id=${chatId}&${type}=${data}`;
+      case 'forward_message':
+        return `chat_id=${chatId}&from_chat_id=${data.from_chat_id}&message_id=${data.message_id}`;
     }
-
-    // case 'document':
-    //  case 'audio':
-    // case 'voice':
-    // case 'video_note':
-    // case 'location'
-    // case 'contact'
-    // case 'animation':
   }
 
   getChatData(chatId) {
@@ -71,7 +65,7 @@ export class TelegramInteractor {
       inline_keyboard: preparedOptions,
     };
 
-    const inUriString = encodeURI(JSON.stringify(inlineKeyboard));
+    const inUriString = encodeURIComponent(JSON.stringify(inlineKeyboard));
 
     return `reply_markup=${inUriString}`;
   }

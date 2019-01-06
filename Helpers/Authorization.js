@@ -41,7 +41,17 @@ export class AuthorizationHelper {
       return;
     }
 
-    // TODO: Handle if this channel already subscribed to group.
+    const channelAlreadyListenToThisGroup = await this.dbConnection('groups_with_channels')
+        .where('group_id', '=', inviteCodeRecord.group_to_join)
+        .where('channel_id', '=', channelId)
+        .select('id');
+
+    if (channelAlreadyListenToThisGroup.length) {
+      const text = await this.textHelper.getText('channel_group_already_connected', user);
+
+      await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+      return;
+    }
 
     const trx = await promisify(this.dbConnection.transaction);
 

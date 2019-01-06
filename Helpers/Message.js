@@ -4,76 +4,35 @@ export class MessageHelper {
 
   parseMessageData(message, { chat_id, data_type }) {
     const { id, is_bot } = message.from;
-    let data;
-    let dataType;
-    let additionalData = null;
 
-    if (message.text) {
-      console.log('Received text', message.text);
-      data = message.text;
-      dataType = 'text';
-    }
-
-    if (message.photo) {
-      console.log('Received photo', JSON.stringify(message.photo));
-      data = message.photo;
-
-      if (message.caption) {
-        additionalData = {
-          type: 'caption',
-          text: message.caption,
-        };
-      }
-      dataType = 'photo';
-    }
-
-    if (message.sticker) {
-      data = message.sticker.file_id;
-      dataType = 'sticker';
-    }
-
-    if (message.document) {
-      console.log('Received file', JSON.stringify(message.document));
-      dataType = 'document';
-
-      if (message.document.mime_type && message.document.mime_type === 'video/mp4') {
-        switch (message.document.mime_type) {
-          case 'video/mp4':
-            dataType = 'video';
-            break;
-        }
-      }
-
-      data = message.document.file_id;
-    }
+    let { data, dataType, additionalData } = this.getMessageMainData(message);
 
     if (message.reply_to_message) {
       console.log('This is reply', JSON.stringify(message.reply_to_message));
-      const replyMessageId = message.reply_to_message.message_id;
+      const replyMessage = message.reply_to_message;
 
-      additionalData = {
-        type: 'reply_to_message_id',
-        text: replyMessageId,
-      };
+      const replyData = this.parseMessageData(replyMessage, { chat_id: replyMessage.chat.id });
+
+      console.log('\nThis is reply user message', JSON.stringify(replyData));
     }
 
-    console.log('M', JSON.stringify(message));
+    console.log('\nM', JSON.stringify(message));
 
     if (message.entities) {
-      const formattedEntites = message.entities
+      const formattedEntities = message.entities
           .filter(entity => entity.type === 'text_link')
           .map(entity => entity.url)
           .join('\n');
 
-      console.log('Formateed', formattedEntites, dataType);
+      console.log('Formatted', formattedEntities, dataType);
 
       // Append to text message all links.
       if (dataType === 'text') {
-        data = `${data}\n${formattedEntites}`;
+        data = `${data}\n${formattedEntities}`;
       }
     }
 
-    if (data_type) {
+    if (dataType !== 'forward_message' && data_type) {
       dataType = data_type;
     }
 
@@ -86,8 +45,72 @@ export class MessageHelper {
       is_bot,
       chat_id,
       data,
+      date: message.date,
+      message_id: message.message_id,
       data_type: dataType,
       additional_data: additionalData,
     };
+  }
+
+  getMessageMainData(message) {
+    let data;
+    let dataType;
+    let additionalData = null;
+
+    // Check if we have some caption for message
+    if (message.caption) {
+      additionalData = {
+        type: 'caption',
+        text: message.caption,
+      };
+    }
+
+    if (message.forward_from_chat) {
+      console.log('\nThis is forwarded message', JSON.stringify(message));
+
+      data = {
+        chat_id: message.chat.id,
+        from_chat_id: message.chat.id,
+        message_id: message.message_id,
+      };
+
+      return { data, dataType: 'forward_message', additionalData };
+    }
+
+    if (message.text) {
+      dataType = 'text';
+    }
+
+    if (message.photo) {
+      dataType = 'photo';
+    }
+
+    if (message.sticker) {
+      dataType = 'sticker';
+    }
+
+    if (message.document) {
+      dataType = 'document';
+    }
+
+    if (message.voice) {
+      dataType = 'voice';
+    }
+
+    if (message.audio) {
+      dataType = 'audio';
+    }
+
+    if (message.video_note) {
+      dataType = 'video_note';
+    }
+
+    if (message.text || message.photo) {
+      data = message[dataType];
+    } else {
+      data = message[dataType].file_id;
+    }
+
+    return { data, dataType, additionalData };
   }
 }

@@ -9,9 +9,11 @@ import { LocalCache as UserCache } from '../Helpers/UserCache';
 import { CallbackController } from './Callback';
 import { ChannelHelper } from '../Helpers/Channel';
 import { MessageHelper } from '../Helpers/Message';
+import { messageTypesWithActions } from '../src/messageTypesWithActions';
+import { Queue } from '../Helpers/QueueService';
 
-const CAPTION_NEEDED = ['photo', 'video', 'document'];
-const NEED_PREVIOUS_MESSAGE = ['sticker'];
+const CAPTION_NEEDED = ['photo', 'video', 'document', 'audio', 'voice'];
+const NEED_PREVIOUS_MESSAGE = ['sticker', 'video_note', 'forward_message'];
 
 export class TotalBotController {
   constructor(db) {
@@ -25,93 +27,135 @@ export class TotalBotController {
     this.userCache = UserCache;
     this.callbackController = new CallbackController(this.textHelper, this.telegramInteractor, this.userCache);
     this.channelHelper = new ChannelHelper(db, this.textHelper, this.telegramInteractor, this.authorization);
+    this.messagesToProcess = [];
+    this.messagesWithIdMap = {};
   }
 
   async publishMessageToDependentChannels(messageData) {
-    // TODO: implement queue logic here for messages
     const message = JSON.parse(messageData);
 
-    const group = await this.dbConnection('groups as g')
-        .where('g.chat_id', '=', message.chat_id)
-        .leftJoin('groups_with_channels as gwc', 'g.id', '=', 'gwc.group_id')
-        .leftJoin('channels as c', 'gwc.channel_id', '=', 'c.id')
-        .select('c.chat');
+    // Verify if chat is open for message processing
+    const currentQueueStatus = Queue.checkInQueue(message.chat_id);
 
-    if (!group.length) {
+    console.log('\nChat lock', currentQueueStatus);
+
+    // Chat is closed. Means, currently processing one message.
+    if (currentQueueStatus) {
+      // We have to save newly came message for processing later.
+      if (!this.messagesToProcess.includes(message.message_id)) {
+        // Save message associated with this message id
+        this.messagesWithIdMap[message.message_id] = message;
+
+        // Add new message id
+        this.messagesToProcess.push(message.message_id);
+
+        // Resort array
+        this.messagesToProcess.sort((a, b) => a - b);
+      }
+
       return;
     }
 
-    const messageActions = [];
+    // Set lock
+    Queue.setLock(message.chat_id, true);
 
-    for (const channelsToPublish of group) {
-      // If there is no chat id, skip and go to next message
-      if (!channelsToPublish.chat) {
-        continue;
+    try {
+      const group = await this.dbConnection('groups as g')
+          .where('g.chat_id', '=', message.chat_id)
+          .leftJoin('groups_with_channels as gwc', 'g.id', '=', 'gwc.group_id')
+          .leftJoin('channels as c', 'gwc.channel_id', '=', 'c.id')
+          .select('c.chat');
+
+      if (!group.length) {
+        Queue.setLock(message.chat_id, false);
+        return;
       }
 
-      const userNameForMessage = await this.dbConnection('users')
-          .where('tg_user_id', '=', message.id)
-          .select('user_name');
+      console.log('\n===> Message to publish', messageData, '\n');
 
-      const textToSendBeforeData = `${userNameForMessage[0].user_name}`;
+      const messageActions = [];
 
-      // Define do we need to add caption for message.
-      if (CAPTION_NEEDED.includes(message.data_type)) {
-        if (message.additional_data) {
-          if (message.additional_data.type === 'caption') {
-            message.additional_data.text = `${textToSendBeforeData}: ${message.additional_data.text}`;
+      for (const channelsToPublish of group) {
+        // If there is no chat id, skip and go to next message
+        if (!channelsToPublish.chat) {
+          continue;
+        }
+
+        const userNameForMessage = await this.dbConnection('users')
+            .where('tg_user_id', '=', message.id)
+            .select('user_name');
+
+        const textToSendBeforeData = userNameForMessage[0].user_name;
+
+        // Define do we need to add caption for message.
+        if (CAPTION_NEEDED.includes(message.data_type)) {
+          if (message.additional_data) {
+            if (message.additional_data.type === 'caption') {
+              message.additional_data.text = `${textToSendBeforeData}:\n${message.additional_data.text}`;
+            }
+          } else {
+            message.additional_data = {
+              type: 'caption',
+              text: textToSendBeforeData,
+            };
           }
-        } else {
-          message.additional_data = {
-            type: 'caption',
-            text: textToSendBeforeData,
-          };
+
+          message.additional_data.text = encodeURIComponent(message.additional_data.text);
         }
 
-        message.additional_data.text = encodeURI(message.additional_data.text);
-      }
+        // We have bunch of files or some other data
+        if (Array.isArray(message.data)) {
+          // Sort files from bigger size to lower
+          const filteredData = message.data.sort((a, b) => b.size - a.size)[0];
+          const fileToSend = filteredData.file_id;
 
-      // We have bunch of files or some other data
-      if (Array.isArray(message.data)) {
-        // Sort files from bigger size to lower
-        const filteredData = message.data.sort((a, b) => b.size - a.size)[0];
-        const fileToSend = filteredData.file_id;
+          // Here we process bunch of files. Few documents, images etc.
+          switch (message.data_type) {
+            case 'photo':
+              messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendPhoto', fileToSend, 'photo', message.additional_data));
+              break;
+          }
 
-        // Here we process bunch of files. Few documents, images etc.
-        switch (message.data_type) {
-          case 'photo':
-            messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendPhoto', fileToSend, 'photo', message.additional_data));
-            break;
+          continue;
         }
 
-        continue;
+        if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
+          await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text');
+        }
+
+        if (messageTypesWithActions[message.data_type]) {
+          messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, messageTypesWithActions[message.data_type].action, message.data, messageTypesWithActions[message.data_type].type, message.additional_data));
+          continue;
+        }
+
+        const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
+
+        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', message.additional_data));
       }
+
+      console.log('\nStep by step execution', NEED_PREVIOUS_MESSAGE.includes(message.data_type));
 
       if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
-        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text'));
+        for (const prom of messageActions) {
+          await prom;
+        }
+      } else {
+        await Promise.all(messageActions);
       }
-
-      // We got single file.
-      switch (message.data_type) {
-        case 'video':
-        case 'document':
-        case 'sticker':
-          messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendDocument', message.data, 'document', message.additional_data));
-          continue;
-      }
-
-      const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
-
-      messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', message.additional_data));
-
+    } catch (e) {
+      console.log('Error in processing message to broadcast', e.message);
+    } finally {
+      // Disable lock
+      Queue.setLock(message.chat_id, false);
     }
 
-    if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
-      for (const prom of messageActions) {
-        await prom;
-      }
-    } else {
-      await Promise.all(messageActions);
+    if (this.messagesToProcess.length) {
+      const messageKey = this.messagesToProcess.shift();
+      // Reassign message data to new object for processing
+      const messageDataInCache = Object.assign({}, this.messagesWithIdMap[messageKey]);
+      this.messagesWithIdMap[messageKey] = null;
+
+      await this.publishMessageToDependentChannels(JSON.stringify(messageDataInCache));
     }
   }
 
@@ -134,8 +178,6 @@ export class TotalBotController {
       console.log('Some error in user', user);
       return;
     }
-
-    console.log('U', JSON.stringify(user));
 
     console.time('Process message took');
 

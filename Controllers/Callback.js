@@ -41,24 +41,4 @@ export class CallbackController {
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
-
-
-  async sendTextWithSkip(user, skipText, formattedText) {
-    const textInline = {
-      inline_keyboard: [
-        [
-          {
-            text: skipText,
-            callback_data: 'skip:skip',
-          },
-        ],
-      ],
-    };
-
-    const inUriString = encodeURI(JSON.stringify(textInline));
-
-    const inlinePart = `reply_markup=${inUriString}`;
-
-    await this.telegramInteractor.sendMessageWithOptions(user, inlinePart, formattedText);
-  }
 }
