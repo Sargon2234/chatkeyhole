@@ -55,7 +55,10 @@ export class MessageHelper {
   getMessageMainData(message) {
     let data;
     let dataType;
-    let additionalData = null;
+    let additionalData = {
+      group_message_id: message.message_id,
+      group_chat_id: message.chat.id,
+    };
 
     // Check if we have some caption for message
     if (message.caption) {

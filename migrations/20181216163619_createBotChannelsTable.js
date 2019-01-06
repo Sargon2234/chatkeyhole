@@ -7,5 +7,5 @@ exports.up = function (knex, Promise) {
 };
 
 exports.down = function (knex, Promise) {
-  return knex.schema.dropTable('user_channels');
+  return knex.schema.dropTable('channels');
 };

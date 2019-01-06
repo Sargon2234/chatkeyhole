@@ -37,8 +37,6 @@ export class TotalBotController {
     // Verify if chat is open for message processing
     const currentQueueStatus = Queue.checkInQueue(message.chat_id);
 
-    console.log('\nChat lock', currentQueueStatus);
-
     // Chat is closed. Means, currently processing one message.
     if (currentQueueStatus) {
       // We have to save newly came message for processing later.
@@ -87,17 +85,24 @@ export class TotalBotController {
 
         const textToSendBeforeData = userNameForMessage[0].user_name;
 
+        // For reply messages logic looks like this:
+        // 1. Get message id from db
+        // 2. Publish response but with reply_to_message_id from step 1.
+        // AND IMPORTANT: we have to do the same operation for all channels.
+        if (message.additional_data.type === 'reply') {
+          // Step 1. Forward silent message and save message id for this channel.
+        }
+
         // Define do we need to add caption for message.
         if (CAPTION_NEEDED.includes(message.data_type)) {
-          if (message.additional_data) {
-            if (message.additional_data.type === 'caption') {
-              message.additional_data.text = `${textToSendBeforeData}:\n${message.additional_data.text}`;
-            }
+          // If message already have caption, we have to add user name before main text
+          if (message.additional_data.type === 'caption') {
+            message.additional_data.text = `${textToSendBeforeData}:\n${message.additional_data.text}`;
           } else {
-            message.additional_data = {
-              type: 'caption',
-              text: textToSendBeforeData,
-            };
+            // If message doesn't have caption, but requires it, we have to add it.
+            // In this case caption would be only user name.
+            message.additional_data.type = 'caption';
+            message.additional_data.text = textToSendBeforeData;
           }
 
           message.additional_data.text = encodeURIComponent(message.additional_data.text);
@@ -120,7 +125,7 @@ export class TotalBotController {
         }
 
         if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
-          await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text');
+          await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text', message.additional_data);
         }
 
         if (messageTypesWithActions[message.data_type]) {
@@ -132,8 +137,6 @@ export class TotalBotController {
 
         messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', message.additional_data));
       }
-
-      console.log('\nStep by step execution', NEED_PREVIOUS_MESSAGE.includes(message.data_type));
 
       if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
         for (const prom of messageActions) {

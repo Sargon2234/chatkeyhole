@@ -7,13 +7,20 @@ export class TelegramInteractor {
   }
 
   async sendMessage(chatId, actionName, data, type, additional_data) {
-    if (additional_data && type !== 'forward_message') {
-      const row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
+    let dataForMessageSave;
 
-      return makeRequest(actionName, row);
+    if (additional_data) {
+      let { group_chat_id, group_message_id } = additional_data;
+      dataForMessageSave = { group_chat_id, group_message_id };
     }
 
-    return makeRequest(actionName, this.generateUrlString(chatId, data, type));
+    if (additional_data.type && type !== 'forward_message') {
+      const row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
+
+      return makeRequest(actionName, row, dataForMessageSave);
+    }
+
+    return makeRequest(actionName, this.generateUrlString(chatId, data, type), dataForMessageSave);
   }
 
   async sendPreparedMessage(preparedUrl) {
@@ -21,7 +28,7 @@ export class TelegramInteractor {
   }
 
   async sendMessageWithOptions(user, optionsAsInlineKeyboard, text) {
-    const preparedText = await this.generateUrlString(user.chat_id, text, 'text');
+    const preparedText = this.generateUrlString(user.chat_id, text, 'text');
 
     const urlReady = `${preparedText}&${optionsAsInlineKeyboard}`;
 

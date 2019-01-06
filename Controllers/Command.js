@@ -60,7 +60,6 @@ export class CommandController {
         .where('user_id', '=', user.id)
         .select('channel_id');
 
-
     if (!userChannels.length) {
       const text = await this.textHelper.getText('no_channels_name', user);
 

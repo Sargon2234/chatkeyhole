@@ -1,8 +1,9 @@
 import fetch from 'node-fetch';
 import { URL } from 'url';
 import { Queue } from './QueueService';
+import { BotEventEmitter } from './BotEventEmitter';
 
-const makeRequest = async (action, params) => {
+const makeRequest = async (action, params, dataForMessageSave) => {
   const baseUrl = `https://api.telegram.org/bot${process.env.KEYHOLE_SERVICE}/${action}?${params}`;
   console.log('BU', baseUrl, '\n');
 
@@ -11,12 +12,10 @@ const makeRequest = async (action, params) => {
   const queueKey = `message:${chatId}`;
 
   const currentlyProcessing = Queue.checkInQueue(queueKey);
-  console.log('Queue lock!', currentlyProcessing);
 
-  if(currentlyProcessing) {
-    console.log('Request loop');
+  if (currentlyProcessing) {
     await new Promise(resolve => setTimeout(resolve, 100));
-    await this.makeRequest(action, params);
+    await this.makeRequest(action, params, dataForMessageSave);
     return;
   }
 
@@ -26,6 +25,21 @@ const makeRequest = async (action, params) => {
     const requestData = await fetch(baseUrl);
 
     const a = await requestData.json();
+
+    if (a.ok) {
+      if (dataForMessageSave) {
+        const saveMessageRecord = {
+          group_chat_id: dataForMessageSave.group_chat_id,
+          channel: chatId,
+          group_message_id: dataForMessageSave.group_message_id,
+          chat_message_id: a.result.message_id,
+        };
+
+        BotEventEmitter.emit('save_message', JSON.stringify(saveMessageRecord));
+      }
+
+      return a;
+    }
 
     console.log('a', JSON.stringify(a));
     return a;

@@ -21,6 +21,14 @@ httpServer.listen(process.env.APP_PORT, async () => {
     BotEventEmitter.on('group_message', async (data) => {
       await totalBot.publishMessageToDependentChannels(data);
     });
+
+    BotEventEmitter.on('save_message', async (data) => {
+      try {
+        await db('group_message_chat_message').insert(JSON.parse(data));
+      } catch (e) {
+        console.log('Save message error', e.message);
+      }
+    });
   } catch (e) {
     console.log('EE submitter error', e.message);
   }
