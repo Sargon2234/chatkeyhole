@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <style>
-    #watcher, #publisher {
-        text-align: center;
-    }
-
-    #watcher {
-        border-top: 1px dashed darkgrey;
+    .gentle-border {
         border-bottom: 1px dashed darkgrey;
     }
 
@@ -19,18 +14,34 @@
     }
 
     img {
-        margin-top: 5px;
+        display: block;
+        width: 40%;
+        border-bottom: 1px dotted darkgrey;
+        margin: 5px auto;
+        padding-bottom: 5px;
+    }
+
+    #full-img {
+        margin: 0;
+        width: 100%;
+        max-height: 500px;
+        border-bottom: none;
+        padding-bottom: 0;
     }
 
     .block-title {
         background: rgba(0, 0, 0, 0.8);
+    }
+
+    h2 {
+        font-weight: bold;
     }
 </style>
 <body>
 
 <!-- Header -->
 <header class="w3-display-container w3-content w3-center" style="max-width:1500px">
-    <img class="w3-image" src="https://keyhole.girrlbeauty.xyz/images/office.jpg" alt="Me" width="1500" height="600">
+    <img class="w3-image" id="full-img" src="https://keyhole.girrlbeauty.xyz/images/office.jpg" alt="Me" width="1500">
     <div class="w3-display-middle w3-padding-large w3-border w3-wide w3-text-light-grey w3-center block-title">
         <h1 class="w3-hide-medium w3-hide-small w3-xxxlarge black-colored">KEYHOLE BOT</h1>
         <h5 class="w3-hide-large black-colored" style="white-space:nowrap">KEYHOLE BOT</h5>
@@ -39,9 +50,8 @@
     <!-- Navbar (placed at the bottom of the header image) -->
     <div class="w3-bar w3-light-grey w3-round w3-display-bottommiddle w3-hide-small" style="bottom:-16px">
         <a href="#description" class="w3-bar-item w3-button">Описание</a>
-        <a href="#flow" class="w3-bar-item w3-button">Процесс</a>
-        <a href="#watcher" class="w3-bar-item w3-button">Watcher</a>
-        <a href="#publisher" class="w3-bar-item w3-button">Publisher</a>
+        <a href="#flow" class="w3-bar-item w3-button">Оглавление</a>
+        <a href="#full-flow" class="w3-bar-item w3-button">Подробная инструкция</a>
     </div>
 </header>
 
@@ -49,406 +59,249 @@
 <div class="w3-center w3-light-grey w3-padding-16 w3-hide-large w3-hide-medium">
     <div class="w3-bar w3-light-grey">
         <a href="#description" class="w3-bar-item w3-button">Описание</a>
-        <a href="#flow" class="w3-bar-item w3-button">Процесс</a>
-        <a href="#watcher" class="w3-bar-item w3-button">Watcher</a>
-        <a href="#publisher" class="w3-bar-item w3-button">Publisher</a>
+        <a href="#flow" class="w3-bar-item w3-button">Оглавление</a>
+        <a href="#full-flow" class="w3-bar-item w3-button">Подробная инструкция</a>
     </div>
 </div>
 
-<div class="w3-content w3-padding-large w3-margin-top" id="description">
+<div class="w3-content w3-padding-large w3-margin-top gentle-border" id="description">
     <h3>Описание</h3>
-    <p>Keyhole – боты для трансляции сообщений из Telegram групп в Telegram каналы.</p>
-    <p>Публикация в канале происходит от имени человека, который отправил сообщение в группе.</p>
-    <br>
-    <p>У Вас есть группа, где Вы и Ваши коллеги обсуждаете новинки в Вашей сфере.</p>
-    <p>Группа закрыта, ведь Вы не хотите чтобы в нее писали чужие люди.</p>
-    <p>Хотя, Вы не против обучить ребят тонкостям своей профессии. Или Вы хотите делиться своими мыслями и мыслями
-        Ваших коллег с подписчиками.</p>
-    <p>Именно для этого создан Keyhole сервис.</p>
-    <p>Любой участник Вашей группы может создать канал, куда будут публиковаться Ваши разговоры в группе.</p>
-    <p>Таким образом решается две проблемы:</p>
-    <ol class="w3-ol">
-        <li>Вы продолжаете общаться в пределах группы только со "своими" людьми</li>
-        <li>Вы несете в массы свои идеи и мнение</li>
-    </ol>
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p></p>
+    </div>
 </div>
 
-<div class="w3-content w3-padding-large w3-margin-top" id="flow">
-    <h3>Как это работает</h3>
+<div class="w3-content w3-padding-large w3-margin-top gentle-border" id="flow">
+    <h4>Оглавление:</h4>
     <ol class="w3-ol">
-        <li>Подключение <b>@keyholewatcherbot</b> к группе, из которой будут рассылать сообщения в канал
-            <ol class="w3-ol">
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Чтобы добавить бота админом в группу, нужно в чате группы нажать на</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_1.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Затем "Добавить участников"</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_2.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Затем введите в строке поиска @keyholewatcherbot и выберите его в списке</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_3.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_4.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Сейчас нужно дать ему права администратора.</p>
-                        <p>Для этого нажимаем на надпись "Редактировать" на странице информации о группе</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_5.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Выбираем "Добавить администраторов"</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_6.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>И устанавливаем параметры как на картинке</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_7.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Теперь в списке участников чата рядом с ботом должна появиться надпись "администратор"</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_8.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Чтобы посмотреть доступные команды, введите /start в групповом чате</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_9.jpg" alt="im" class="w3-image"
-                         width="375" height="150">
-                </li>
-                <li id="code">
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Теперь введите /getChannelCode</p>
-                        <p>Этот код нужно отправить <b>@keyholepublisherbot</b> для связывания группы и канала</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_13.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-            </ol>
+        <li>
+            <a href="#step1">Подключение бота в группу</a>
         </li>
-        <br>
-        <li>Теперь подключение <b>@keyholepublisherbot</b> к каналу, в которы будут публиковать сообщения из группы
-            <ol class="w3-ol">
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Нужно добавить бота администратором в канал, для этого в чате канала нажать на</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_0.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Затем нажать на панель "Администраторы" и добавить бота</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_1.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_2.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Введите в строке поиска @keyholepublisherbot</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_3.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>И предоставьте права как на картинке</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_4.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Затем, на странице информации о канале бот будет отображен как на картинке</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_5.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Теперь нужно сообщить @keyholepublisherbot о том, что его добавили админом в канал</p>
-                        <p>Вводим в поиске @keyholepublisherbot чтобы начать чат с ботом</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_6.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_7.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Пишем /addChannel</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_8.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Вам нужно ввести название канала, в который был добавлен бот</p>
-                        <p>Найти его можно на странице информации о канале</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_16.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_9.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_10.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Чтобы связать канал и группу, из которой будут присылаться сообщения, нужно ввсети команду
-                            /useCode</p>
-                        <p>Выбрать канал, который вы хотите подвязать</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_11.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_12.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>И ввести код, который получили в группе от <b>@keyholewatcherbot</b> <a href="#code">тут</a>
-                        </p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_14.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-                <li>
-                    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-                        <p>Теперь бот сообщит из какой группы будут приходить сообщения в канал</p>
-                    </div>
-
-                    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_15.jpg" alt="im" class="w3-image"
-                         width="375"
-                         height="150">
-                </li>
-            </ol>
+        <li>
+            <a href="#step2">Подключение бота в канал</a>
+        </li>
+        <li>
+            <a href="#step3">Связывание группы и канала</a>
+        </li>
+        <li>
+            <a href="#commands">Описание команд</a>
+        </li>
+        <li>
+            <a href="#additional">Дополнительно</a>
         </li>
     </ol>
-    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>На этом все, теперь Вы продолжаете общаться в группе как обычно, а Ваши подписчики могут следить за Вами.</p>
-    </div>
 </div>
 <br>
 
-<div class="w3-content w3-padding-large w3-margin-top" id="watcher">
-    <h2>Keyhole watcher bot</h2>
+<div class="w3-content w3-padding-large w3-margin-top gentle-border" id="full-flow">
+    <h2 id="step1">Подключение в группу</h2>
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p><b>@keyholewatcherbot</b> добавляется в группу. Ему нужно дать права администратора</p>
+        <p><b>@keyholeservicebot</b> добавляется в группу. Ему нужно дать права администратора</p>
         <p>Бот в фоновом режиме слушает сообщения и пересылает в каналы, которые подписаны на группу.</p>
         <p>Чтобы "подписать" канал на группу, нужно в группе написать /getChannelCode и бот предоставит код для
-            регистрации в <b>@keyholewatcherbot</b></p>
+            регистрации</p>
+        <p>Этот код нужно будет ввести в личном чате с <b>@keyholeservicebot</b></p>
     </div>
-    <p>Нужно добавить <b>@keyholewatcherbot</b> в группу, из которой будут транслировать сообщения в каналы, боту нужно
+    <p>Нужно добавить <b>@keyholeservicebot</b> в группу, из которой будут транслировать сообщения в каналы, боту нужно
         дать права администратора в группе.</p>
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
         <p>Чтобы добавить бота админом в группу, нужно в чате группы нажать на</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_1.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group3.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Затем "Добавить участников"</p>
+        <p>Теперь добавить бота в группу, нажав на "Добавить участников"</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_2.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group13.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group14.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Затем введите в строке поиска @keyholewatcherbot и выберите его в списке</p>
+        <p>В поиске ввести <b>@keyholeservicebot</b></p>
+        <p>И добавить бота в группу</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_3.jpg" alt="im" class="w3-image" width="375" height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_4.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group12.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Поздравляем! Теперь бот - участник группы</p>
-        <p>Сейчас нужно дать ему права администратора.</p>
-        <p>Для этого нажимаем на надпись "Редактировать" на странице информации о группе</p>
+        <p>Затем "Изменить"</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_5.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group4.jpg" alt="im" class="w3-image" width="375" height="150">
+
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Выбираем "Добавить администраторов"</p>
+        <p>Нажать "Добавить администратора"</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_6.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group5.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
         <p>И устанавливаем параметры как на картинке</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_7.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group6.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Теперь в списке участников чата рядом с ботом должна появиться надпись "администратор"</p>
+        <p>Теперь в списке участников чата рядом с ботом должна появиться надпись "админ"</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_8.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group7.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
         <p>Чтобы посмотреть доступные команды, введите /start в групповом чате</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/watcher_9.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group8.jpg" alt="im" class="w3-image" width="375" height="150">
 </div>
-<br>
 
-<div class="w3-content w3-padding-large w3-margin-top" id="publisher">
-    <h2>Keyhole publisher bot</h2>
+
+<div class="w3-content w3-padding-large w3-margin-top gentle-border">
+    <h2 id="step2">Подключение в канал</h2>
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p><b>@keyholepublisherbot</b> добавляется в канал с правами администратора.</p>
-        <p>Боту в личные сообщения нужно отправить название канала, в который его добавили.</p>
-        <p>После чего можно связать канал и группу. </p>
-        <p>Для этого введите /useCode и введите код, который получили от @keyholewatcherbot в группе</p>
+        <p><b>@keyholeservicebot</b> добавляется в канал. Ему нужно дать права администратора</p>
+        <p>Бот будет присылать в этот канал сообщения из групп, на которые канал подписан</p>
     </div>
-
-    <p>Нужно добавить <b>@keyholepublisherbot</b> в канал, куда будут транислировать сообщения из группы, боту нужно
-        дать права администратора в канале.</p>
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
         <p>Чтобы добавить бота админом в канал, нужно в чате канала нажать на</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_0.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel1.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Затем нажать на панель "Администраторы" и добавить бота</p>
+        <p>Теперь нажать на "Администраторы"</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_1.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_2.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel2.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Введите в строке поиска @keyholepublisherbot</p>
+        <p>Добавить администраторов</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_3.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel3.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>И предоставьте права как на картинке</p>
+        <p>Ввести в строке поиска <b>@keyholservicebot</b></p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_4.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel4.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Затем, на странице информации о канале бот будет отображен как на картинке</p>
+        <p>Установить права как на картинке</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_5.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel5.jpg" alt="im" class="w3-image" width="375" height="150">
 
     <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Теперь нужно сообщить @keyholepublisherbot о том, что его добавили админом в канал</p>
+        <p>Теперь у бота должна появиться такая надпись</p>
     </div>
 
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_6.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_7.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_8.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-
-    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Вам нужно ввести название канала, в который был добавлен бот</p>
-        <p>Найти его можно на странице информации о канале</p>
-    </div>
-
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_16.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_9.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_10.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-
-
-    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Чтобы связать канал и группу, из которой будут присылаться сообщения, нужно ввсети команду /useCode</p>
-        <p>Выбрать канал, который вы хотите подвязать</p>
-    </div>
-
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_11.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_12.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-
-    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Теперь нужно запросить код приглашения в группе. Для этого введите команду /getChannelCode</p>
-        <p>Бот выдаст Вам код, который нужно будет отправить в чат с @keyholepublisherbot</p>
-    </div>
-
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_13.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_14.jpg" alt="im" class="w3-image" width="375"
-         height="150">
-
-
-    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
-        <p>Теперь бот сообщит из какой группы будут приходить сообщения в канал</p>
-    </div>
-
-    <img src="https://keyhole.girrlbeauty.xyz/images/publisher_15.jpg" alt="im" class="w3-image" width="375"
-         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel6.jpg" alt="im" class="w3-image" width="375" height="150">
 </div>
+
+<div class="w3-content w3-padding-large w3-margin-top gentle-border">
+    <h2 id="step3">Связывание группы и канала</h2>
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Нужно попасть в чат с ботом</p>
+        <p>Для этого в строке поиска ввести <b>@keyholeservicebot</b></p>
+        <p>И начать диалог</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot1.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Сначалу нужно сообщить боту что его добавили в канал</p>
+        <p>Для этого нужно ввести команду /addChannel</p>
+        <p>После чего ввести название канала. <a href="#channel_name">Пример</a></p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot2.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot3.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot4.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Теперь нужно получить код активации для группы, которую Вы хотите подвязать</p>
+        <p>Для этого нужно в групповом чате ввести команду /getChannelCode</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/group9.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/group10.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Это код</p>
+    </div>
+    <img src="https://keyhole.girrlbeauty.xyz/images/group11.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Полученный код нужно ввести в чате с <b>@keyholeservicebot</b></p>
+        <p>Переходим в чат с ботом</p>
+        <p>И вводим команду /useCode</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot5.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Выбираем канал, куда будут публиковаться сообщения из группы</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot6.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot7.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Вводим код, полученный в группе</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot8.jpg" alt="im" class="w3-image" width="375" height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/bot9.jpg" alt="im" class="w3-image" width="375" height="150">
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Поздравляю!</p>
+        <p>Теперь сообщения из группы будут публиковаться в канале</p>
+    </div>
+</div>
+
+<div class="w3-content w3-padding-large w3-margin-top gentle-border">
+    <h2 id="commands">Описание команд</h2>
+
+    <h4>/getChannelCode</h4>
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Используется только в групповом чате</p>
+        <p>Бот предоставляет код, который используется для связывания группы и канала</p>
+    </div>
+
+    <h4>/useCode</h4>
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Используется только в личном чате с ботом.</p>
+        <p>Эта команда связывает канал и групповой чат</p>
+    </div>
+
+    <h4>/addChannel</h4>
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Используется только в личном чате с ботом.</p>
+        <p>Эта команда сообщает боту что его добавили в канал. Только после этого бот сможет связать группу и
+            публиковать сообщения</p>
+    </div>
+</div>
+
+<div class="w3-content w3-padding-large w3-margin-top">
+    <h2 id="additional">Дополнительно</h2>
+    <h4 id="channel_name">Название канала</h4>
+
+    <div class="w3-light-grey w3-padding-large w3-padding-22 w3-margin-top">
+        <p>Название канала находится в информации о канале</p>
+        <p>Вы вводите его при создании канала</p>
+    </div>
+
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel_name.jpg" alt="im" class="w3-image" width="375"
+         height="150">
+    <img src="https://keyhole.girrlbeauty.xyz/images/channel.jpg" alt="im" class="w3-image" width="375" height="150">
+</div>
+
+<br>
+<br>
+
 </body>
 </html>
