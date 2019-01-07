@@ -15,7 +15,7 @@ export class TelegramInteractor {
       dataForMessageSave = { group_chat_id, group_message_id };
     }
 
-    if (additional_data.type && type !== 'forward_message') {
+    if (additional_data && additional_data.type && type !== 'forward_message') {
       row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
 
       if (additional_data.reply_to_message_id) {
@@ -24,7 +24,11 @@ export class TelegramInteractor {
     }
 
     if (!row) {
-      row = this.generateUrlString(chatId, data, type, additional_data.reply_to_message_id);
+      if (additional_data) {
+        row = this.generateUrlString(chatId, data, type, additional_data.reply_to_message_id);
+      } else {
+        row = this.generateUrlString(chatId, data, type);
+      }
     }
 
     return makeRequest(actionName, row, dataForMessageSave);

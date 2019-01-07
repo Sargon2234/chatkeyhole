@@ -123,6 +123,8 @@ export class TotalBotController {
 
             await messageBroadcast(this.userModel, channelsToPublish.chat, replyMessageData.message_to_save);
 
+            // Wait a little to send message and record it's id
+            await new Promise(resolve => setTimeout(resolve, 200));
             // and check again for it's availability to response.
             messageToReplyOnInDb = await this.groupMessageChatMessageModel.getChatMessageId(replyMessageData, channelsToPublish);
           }

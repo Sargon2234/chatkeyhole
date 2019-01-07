@@ -29,6 +29,19 @@ httpServer.listen(process.env.APP_PORT, async () => {
         console.log('Save message error', e.message);
       }
     });
+
+    BotEventEmitter.on('remove_from_chat', async (data) => {
+      const { chatId } = JSON.parse(data);
+
+      const channelData = await db('channels').where('chat', '=', chatId).select('id');
+
+      if (!channelData.length) {
+        return;
+      }
+
+      await db('channels').where('chat', '=', chatId).del();
+      await db('group_message_chat_message').where('channel', '=', chatId).del();
+    });
   } catch (e) {
     console.log('EE submitter error', e.message);
   }

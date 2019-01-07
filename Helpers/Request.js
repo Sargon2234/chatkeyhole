@@ -27,7 +27,6 @@ const makeRequest = async (action, params, dataForMessageSave) => {
     const a = await requestData.json();
 
     if (a.ok) {
-      console.log('A', dataForMessageSave);
       if (dataForMessageSave) {
         const saveMessageRecord = {
           group_chat_id: dataForMessageSave.group_chat_id,
@@ -43,6 +42,11 @@ const makeRequest = async (action, params, dataForMessageSave) => {
     }
 
     console.log('a', JSON.stringify(a));
+
+    // Means bot was removed from destination
+    if (a.error_code === 403) {
+      BotEventEmitter.emit('remove_from_chat', JSON.stringify({ chatId }));
+    }
     return a;
   } catch (e) {
     console.log('Error in send message', e.message);

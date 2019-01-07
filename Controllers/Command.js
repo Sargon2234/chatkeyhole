@@ -13,8 +13,8 @@ export class CommandController {
     this.telegramInteractor = new TelegramInteractor();
   }
 
-  async handleReceivedCommand(availableCommands, botType, command, user, token) {
-    console.log('Handle command', botType, command);
+  async handleReceivedCommand(availableCommands, botType, command, user) {
+    command = command.trim();
 
     if (!availableCommands.includes(command)) {
       return false;
@@ -22,23 +22,22 @@ export class CommandController {
 
     switch (command) {
       case '/start':
-        return this.handleStart(user, token, botType);
+        return this.handleStart(user, botType);
       case '/useCode':
         return this.channelOperations(user, 'code2');
       case '/addChannel':
         return this.handleAddChannel(user);
       case '/getChannelCode':
-        return this.handleGetChannelCode(user, token);
+        return this.handleGetChannelCode(user);
       default:
-        return this.handleHelp(user, token, botType);
+        return this.handleHelp(user, botType);
     }
   }
 
-  async handleStart(user, token, botType) {
-    console.log('BT', botType);
+  async handleStart(user, botType) {
     const text = await this.textHelper.getText(`help_${botType}`, user);
 
-    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text', token);
+    await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
   }
 
   async handleHelp(user, token, botType) {
