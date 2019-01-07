@@ -27,4 +27,8 @@ export const messageTypesWithActions = {
     action: 'forwardMessage',
     type: 'forward_message',
   },
+  photo: {
+    action: 'sendPhoto',
+    type: 'photo',
+  },
 };

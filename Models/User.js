@@ -1,17 +1,12 @@
 export class UserModel {
-  constructor(dbConnection) {
-    this.dbConnection = dbConnection('user');
+  constructor(db) {
+    this.dbConnection = db;
   }
 
-  async findUser(userChatId) {
-
+  async getUserByTgId({ id }) {
+    return this.dbConnection('users')
+        .where('tg_user_id', '=', id)
+        .select('user_name');
   }
 
-  async createUser({ chat_id, user_name, first_name, last_name }) {
-
-  }
-
-  async updateUser({ chat_id }, key, value) {
-
-  }
 }

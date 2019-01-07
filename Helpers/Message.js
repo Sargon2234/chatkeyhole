@@ -9,11 +9,12 @@ export class MessageHelper {
 
     if (message.reply_to_message) {
       console.log('This is reply', JSON.stringify(message.reply_to_message));
-      const replyMessage = message.reply_to_message;
 
-      const replyData = this.parseMessageData(replyMessage, { chat_id: replyMessage.chat.id });
-
-      console.log('\nThis is reply user message', JSON.stringify(replyData));
+      additionalData.reply_message = {
+        group_chat_id: message.reply_to_message.chat.id,
+        group_message_id: message.reply_to_message.message_id,
+        message_to_save: this.parseMessageData(message.reply_to_message, { chat_id, data_type }),
+      };
     }
 
     console.log('\nM', JSON.stringify(message));

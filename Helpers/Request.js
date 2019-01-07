@@ -15,7 +15,7 @@ const makeRequest = async (action, params, dataForMessageSave) => {
 
   if (currentlyProcessing) {
     await new Promise(resolve => setTimeout(resolve, 100));
-    await this.makeRequest(action, params, dataForMessageSave);
+    await makeRequest(action, params, dataForMessageSave);
     return;
   }
 
@@ -27,6 +27,7 @@ const makeRequest = async (action, params, dataForMessageSave) => {
     const a = await requestData.json();
 
     if (a.ok) {
+      console.log('A', dataForMessageSave);
       if (dataForMessageSave) {
         const saveMessageRecord = {
           group_chat_id: dataForMessageSave.group_chat_id,

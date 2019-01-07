@@ -8,6 +8,7 @@ export class TelegramInteractor {
 
   async sendMessage(chatId, actionName, data, type, additional_data) {
     let dataForMessageSave;
+    let row;
 
     if (additional_data) {
       let { group_chat_id, group_message_id } = additional_data;
@@ -15,12 +16,18 @@ export class TelegramInteractor {
     }
 
     if (additional_data.type && type !== 'forward_message') {
-      const row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
+      row = `chat_id=${chatId}&${type}=${data}&${additional_data.type}=${additional_data.text}`;
 
-      return makeRequest(actionName, row, dataForMessageSave);
+      if (additional_data.reply_to_message_id) {
+        row = `${row}&reply_to_message_id=${additional_data.reply_to_message_id}`;
+      }
     }
 
-    return makeRequest(actionName, this.generateUrlString(chatId, data, type), dataForMessageSave);
+    if (!row) {
+      row = this.generateUrlString(chatId, data, type, additional_data.reply_to_message_id);
+    }
+
+    return makeRequest(actionName, row, dataForMessageSave);
   }
 
   async sendPreparedMessage(preparedUrl) {
@@ -42,19 +49,26 @@ export class TelegramInteractor {
     }
   }
 
-  generateUrlString(chatId, data, type) {
+  generateUrlString(chatId, data, type, replyMessageId) {
+    let basePart = '';
+
+    if (replyMessageId) {
+      basePart = `reply_to_message_id=${replyMessageId}&`;
+    }
+
     switch (type) {
       case 'text':
         data = encodeURIComponent(data);
-        return `chat_id=${chatId}&text=${data}`;
+        return `${basePart}chat_id=${chatId}&text=${data}`;
       case 'options':
         return `chat_id=${chatId}&${Object.entries(data).map(v => v.join('=')).join('&')}`;
       case 'video':
       case 'photo':
       case 'document':
-        return `chat_id=${chatId}&${type}=${data}`;
+      case 'video_note':
+        return `${basePart}chat_id=${chatId}&${type}=${data}`;
       case 'forward_message':
-        return `chat_id=${chatId}&from_chat_id=${data.from_chat_id}&message_id=${data.message_id}`;
+        return `${basePart}chat_id=${chatId}&from_chat_id=${data.from_chat_id}&message_id=${data.message_id}`;
     }
   }
 

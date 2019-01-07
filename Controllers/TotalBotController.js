@@ -5,51 +5,78 @@ import { AuthorizationHelper } from '../Helpers/Authorization';
 import { CommandController } from './Command';
 import { listenBotCommands } from '../src/listenBotCommands';
 import { publisherBotCommands } from '../src/publisherBotCommands';
-import { LocalCache as UserCache } from '../Helpers/UserCache';
+import { LocalCache } from '../Helpers/UserCache';
 import { CallbackController } from './Callback';
 import { ChannelHelper } from '../Helpers/Channel';
 import { MessageHelper } from '../Helpers/Message';
-import { messageTypesWithActions } from '../src/messageTypesWithActions';
 import { Queue } from '../Helpers/QueueService';
-
-const CAPTION_NEEDED = ['photo', 'video', 'document', 'audio', 'voice'];
-const NEED_PREVIOUS_MESSAGE = ['sticker', 'video_note', 'forward_message'];
+import { GroupMessageChatMessage } from '../Models/GroupMessageChatMessage';
+import { GroupModel } from '../Models/Group';
+import { UserModel } from '../Models/User';
+import { messageBroadcast } from '../Helpers/MessageBroadcast';
 
 export class TotalBotController {
   constructor(db) {
     this.ee = BotEventEmitter;
-    this.dbConnection = db;
+    this.userCache = LocalCache;
     this.textHelper = new TextHelper(db);
     this.messageHelper = new MessageHelper();
     this.telegramInteractor = new TelegramInteractor();
     this.authorization = new AuthorizationHelper(db, this.textHelper, this.telegramInteractor);
     this.commandController = new CommandController(db);
-    this.userCache = UserCache;
     this.callbackController = new CallbackController(this.textHelper, this.telegramInteractor, this.userCache);
     this.channelHelper = new ChannelHelper(db, this.textHelper, this.telegramInteractor, this.authorization);
-    this.messagesToProcess = [];
+    this.groupModel = new GroupModel(db);
+    this.userModel = new UserModel(db);
+    this.groupMessageChatMessageModel = new GroupMessageChatMessage(db);
+    this.messagesToProcess = {};
     this.messagesWithIdMap = {};
+    this.messageChatsWithDates = [];
   }
 
+  // Here we use queue logic. FIFO. One message per channel.
   async publishMessageToDependentChannels(messageData) {
     const message = JSON.parse(messageData);
 
-    // Verify if chat is open for message processing
+    // Verify if chat is open for message processing. Important, we lock GROUP, not channel.
+    // So, if there is new messages from different group for this channel, there will be no conflicts.
     const currentQueueStatus = Queue.checkInQueue(message.chat_id);
 
     // Chat is closed. Means, currently processing one message.
     if (currentQueueStatus) {
-      // We have to save newly came message for processing later.
-      if (!this.messagesToProcess.includes(message.message_id)) {
-        // Save message associated with this message id
-        this.messagesWithIdMap[message.message_id] = message;
+      // We have to save newly received message for processing later.
+      // But we receive messages from different channels, so we store it to list for current chat id.
 
-        // Add new message id
-        this.messagesToProcess.push(message.message_id);
-
-        // Resort array
-        this.messagesToProcess.sort((a, b) => a - b);
+      // Create empty list for messages in chat.
+      if (!this.messagesToProcess[message.chat_id]) {
+        this.messagesToProcess[message.chat_id] = [];
       }
+
+      // If we have already registered this message id for this chat id
+      if (this.messagesToProcess[message.chat_id].includes(message.message_id)) {
+        return;
+      }
+
+      // If this is first message data associated with channel
+      if (!this.messagesWithIdMap[message.chat_id]) {
+        this.messagesWithIdMap[message.chat_id] = {};
+      }
+
+      // Save message associated with this message id
+      this.messagesWithIdMap[message.chat_id][message.message_id] = message;
+
+      // Add new message id
+      this.messagesToProcess[message.chat_id].push(message.message_id);
+
+      // Resort array of messages for this channel. Ascending order, send lowest message id. (means the oldest one)
+      // We don't use date here, because we could receive same date time for two different messages
+      this.messagesToProcess[message.chat_id].sort((a, b) => a - b);
+
+      // Now we have to add this channel and message to chats with dates.
+      // We need this to send always oldest messages.
+      this.messageChatsWithDates.push({ date: message.date, chat_id: message.chat_id });
+      // And resort array to use always oldest messages
+      this.messageChatsWithDates.sort((a, b) => a.date - b.date);
 
       return;
     }
@@ -58,11 +85,7 @@ export class TotalBotController {
     Queue.setLock(message.chat_id, true);
 
     try {
-      const group = await this.dbConnection('groups as g')
-          .where('g.chat_id', '=', message.chat_id)
-          .leftJoin('groups_with_channels as gwc', 'g.id', '=', 'gwc.group_id')
-          .leftJoin('channels as c', 'gwc.channel_id', '=', 'c.id')
-          .select('c.chat');
+      const group = await this.groupModel.getChatsForGroup(message);
 
       if (!group.length) {
         Queue.setLock(message.chat_id, false);
@@ -71,7 +94,7 @@ export class TotalBotController {
 
       console.log('\n===> Message to publish', messageData, '\n');
 
-      const messageActions = [];
+      let messageActions = [];
 
       for (const channelsToPublish of group) {
         // If there is no chat id, skip and go to next message
@@ -79,84 +102,60 @@ export class TotalBotController {
           continue;
         }
 
-        const userNameForMessage = await this.dbConnection('users')
-            .where('tg_user_id', '=', message.id)
-            .select('user_name');
-
-        const textToSendBeforeData = userNameForMessage[0].user_name;
+        // const userNameForMessage = await this.userModel.getUserByTgId(message);
+        // const textToSendBeforeData = userNameForMessage[0].user_name;
 
         // For reply messages logic looks like this:
         // 1. Get message id from db
         // 2. Publish response but with reply_to_message_id from step 1.
         // AND IMPORTANT: we have to do the same operation for all channels.
-        if (message.additional_data.type === 'reply') {
-          // Step 1. Forward silent message and save message id for this channel.
-        }
+        if (message.additional_data.reply_message) {
+          const replyMessageData = message.additional_data.reply_message;
 
-        // Define do we need to add caption for message.
-        if (CAPTION_NEEDED.includes(message.data_type)) {
-          // If message already have caption, we have to add user name before main text
-          if (message.additional_data.type === 'caption') {
-            message.additional_data.text = `${textToSendBeforeData}:\n${message.additional_data.text}`;
-          } else {
-            // If message doesn't have caption, but requires it, we have to add it.
-            // In this case caption would be only user name.
-            message.additional_data.type = 'caption';
-            message.additional_data.text = textToSendBeforeData;
+          let messageToReplyOnInDb = await this.groupMessageChatMessageModel.getChatMessageId(replyMessageData, channelsToPublish);
+
+          // We didn't save this message,
+          // so we have to save it and retry our work.
+          if (!messageToReplyOnInDb.length) {
+            // We published not stored message
+            // BUT IMPORTANT -> publish only to current channel. Because message could be available in other channels.
+            // AND we can't execute same function because there will be dead lock!
+
+            await messageBroadcast(this.userModel, channelsToPublish.chat, replyMessageData.message_to_save);
+
+            // and check again for it's availability to response.
+            messageToReplyOnInDb = await this.groupMessageChatMessageModel.getChatMessageId(replyMessageData, channelsToPublish);
           }
 
-          message.additional_data.text = encodeURIComponent(message.additional_data.text);
-        }
-
-        // We have bunch of files or some other data
-        if (Array.isArray(message.data)) {
-          // Sort files from bigger size to lower
-          const filteredData = message.data.sort((a, b) => b.size - a.size)[0];
-          const fileToSend = filteredData.file_id;
-
-          // Here we process bunch of files. Few documents, images etc.
-          switch (message.data_type) {
-            case 'photo':
-              messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendPhoto', fileToSend, 'photo', message.additional_data));
-              break;
+          if (!messageToReplyOnInDb.length) {
+            console.log('\n====>Probably, some error in reply to message', messageData, '\n\n');
+            return;
           }
 
+          message.additional_data.reply_to_message_id = messageToReplyOnInDb[0].chat_message_id;
+
+          messageActions.push(messageBroadcast(this.userModel, channelsToPublish.chat, message));
           continue;
         }
 
-        if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
-          await this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', `${textToSendBeforeData}:`, 'text', message.additional_data);
-        }
-
-        if (messageTypesWithActions[message.data_type]) {
-          messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, messageTypesWithActions[message.data_type].action, message.data, messageTypesWithActions[message.data_type].type, message.additional_data));
-          continue;
-        }
-
-        const textToSend = `${userNameForMessage[0].user_name}:\n${message.data}`;
-
-        messageActions.push(this.telegramInteractor.sendMessage(channelsToPublish.chat, 'sendMessage', textToSend, 'text', message.additional_data));
+        messageActions.push(messageBroadcast(this.userModel, channelsToPublish.chat, message));
       }
-
-      if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
-        for (const prom of messageActions) {
-          await prom;
-        }
-      } else {
-        await Promise.all(messageActions);
-      }
+      await Promise.all(messageActions);
     } catch (e) {
       console.log('Error in processing message to broadcast', e.message);
     } finally {
-      // Disable lock
+      // Release lock
       Queue.setLock(message.chat_id, false);
     }
 
-    if (this.messagesToProcess.length) {
-      const messageKey = this.messagesToProcess.shift();
+    // Here we have to check if we have pending messages to publish
+    // get oldest one, publish and remove from queue
+    if (this.messageChatsWithDates.length) {
+      const messageDataInCacheWithDate = this.messageChatsWithDates.shift();
+      const messageKey = this.messagesToProcess[messageDataInCacheWithDate.chat_id].shift();
       // Reassign message data to new object for processing
-      const messageDataInCache = Object.assign({}, this.messagesWithIdMap[messageKey]);
-      this.messagesWithIdMap[messageKey] = null;
+      const messageDataInCache = Object.assign({}, this.messagesWithIdMap[messageDataInCacheWithDate.chat_id][messageKey]);
+      this.messagesWithIdMap[messageDataInCacheWithDate.chat_id][messageKey] = null;
 
       await this.publishMessageToDependentChannels(JSON.stringify(messageDataInCache));
     }
