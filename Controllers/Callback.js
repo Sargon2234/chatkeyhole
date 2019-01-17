@@ -15,6 +15,8 @@ export class CallbackController {
         return this.handleSkip(user);
       case 'code2':
         return this.bindCodeAndChannel(user, action);
+      case 'vote':
+        return this.processVote(user, action);
     }
   }
 
@@ -40,5 +42,9 @@ export class CallbackController {
     this.userCache.setUserAction(user.id, 'code');
 
     await this.telegramInteractor.sendMessage(user.chat_id, 'sendMessage', text, 'text');
+  }
+
+  async processVote(userData, action) {
+    console.log('U', userData, 'action', action);
   }
 }

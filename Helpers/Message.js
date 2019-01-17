@@ -109,6 +109,10 @@ export class MessageHelper {
       dataType = 'video_note';
     }
 
+    if (message.contact) {
+      dataType = 'contact';
+    }
+
     if (message.text || message.photo) {
       data = message[dataType];
     } else {

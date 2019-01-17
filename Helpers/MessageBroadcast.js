@@ -23,7 +23,7 @@ const messageBroadcast = async (UserModel, chatIdPublishMessageTo, message) => {
     message.additional_data.group_message_id = message.message_id;
   }
 
-// Define do we need to add caption for message.
+  // Define do we need to add caption for message.
   if (CAPTION_NEEDED.includes(message.data_type)) {
     // If message already have caption, we have to add user name before main text
     if (message.additional_data.type === 'caption') {
@@ -38,6 +38,7 @@ const messageBroadcast = async (UserModel, chatIdPublishMessageTo, message) => {
     message.additional_data.text = encodeURIComponent(message.additional_data.text);
   }
 
+  // Send message with user name to distinct who sent message to group. If we can't add caption.
   if (NEED_PREVIOUS_MESSAGE.includes(message.data_type)) {
     if (message.data_type === 'forward_message') {
       message.additional_data.type = null;

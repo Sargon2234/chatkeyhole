@@ -31,6 +31,12 @@ export class TelegramInteractor {
       }
     }
 
+    if (!Number.isInteger(chatId)) {
+      // This is not in group message. So we have to add like/dislike inline.
+      row = `${row}&${this.generateLikeDislikeInline()}`;
+    }
+
+
     return makeRequest(actionName, row, dataForMessageSave);
   }
 
@@ -93,5 +99,47 @@ export class TelegramInteractor {
     const inUriString = encodeURIComponent(JSON.stringify(inlineKeyboard));
 
     return `reply_markup=${inUriString}`;
+  }
+
+  generateLikeDislikeInline(likeCounter, dislikeCounter) {
+    let likeText = '👍';
+    let dislikeText = '👎';
+
+    if (likeCounter) {
+      likeText = `${likeText} ${likeCounter}`;
+    }
+
+    if (dislikeCounter) {
+      dislikeText = `${dislikeText} ${dislikeCounter}`;
+    }
+
+    const preparedOptions = [
+      [
+        {
+          text: likeText,
+          callback_data: `vote:like`,
+        },
+        {
+          text: dislikeText,
+          callback_data: `vote:dislike`,
+        },
+      ],
+    ];
+
+    const inlineKeyboard = {
+      inline_keyboard: preparedOptions,
+    };
+
+    const inUriString = encodeURIComponent(JSON.stringify(inlineKeyboard));
+
+    return `reply_markup=${inUriString}`;
+  }
+
+  updateInlineMessage({ chat_id, message_id, likes, dislikes }) {
+    const likeDislikeButtons = this.generateLikeDislikeInline(likes, dislikes);
+
+    const messageRow = `chat_id=${chat_id}&message_id=${message_id}&${likeDislikeButtons}`;
+
+    return makeRequest('editMessageReplyMarkup', messageRow);
   }
 }

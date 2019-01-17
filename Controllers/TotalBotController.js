@@ -14,6 +14,7 @@ import { GroupMessageChatMessage } from '../Models/GroupMessageChatMessage';
 import { GroupModel } from '../Models/Group';
 import { UserModel } from '../Models/User';
 import { messageBroadcast } from '../Helpers/MessageBroadcast';
+import { VoteInteractor } from '../Helpers/VoteInteractor';
 
 export class TotalBotController {
   constructor(db) {
@@ -29,6 +30,7 @@ export class TotalBotController {
     this.groupModel = new GroupModel(db);
     this.userModel = new UserModel(db);
     this.groupMessageChatMessageModel = new GroupMessageChatMessage(db);
+    this.voteInteractor = new VoteInteractor(db);
     this.messagesToProcess = {};
     this.messagesWithIdMap = {};
     this.messageChatsWithDates = [];
@@ -201,6 +203,12 @@ export class TotalBotController {
       messageToProcess = callback_query.message;
       messageToProcess.callback_query = callback_query.data;
       messageToProcess.force_data_type = 'callback_query';
+
+      // This is vote. Special logic.
+      if (callback_query.data.includes('vote:')) {
+        await this.voteInteractor.processVote(callback_query);
+        return;
+      }
     }
 
     const chatData = this.parseChatData(messageToProcess);
@@ -287,7 +295,7 @@ export class TotalBotController {
   }
 
   parseChatData({ chat, entities, force_data_type }) {
-    console.log('CD', JSON.stringify(chat));
+    console.log('\nCD', JSON.stringify(chat));
     const { id, title, type } = chat;
 
     const returnData = { chat_id: id, title, type };

@@ -6,9 +6,11 @@ export class TextHelper {
   }
 
   async getText(key, { language }) {
-    if (!language || !availableLanguagesCodes.includes(language)) {
-      language = 'en';
-    }
+    // if (!language || !availableLanguagesCodes.includes(language)) {
+    //   language = 'ru';
+    // }
+
+    language = 'ru';
 
     const foundText = await this.dbConnection('texts')
         .select('text')
